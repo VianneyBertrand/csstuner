@@ -1,5 +1,3 @@
-'use client'
-
 interface FabProps {
   position: 'bottom-left' | 'bottom-right'
   onClick: () => void
@@ -7,7 +5,7 @@ interface FabProps {
 }
 
 export function Fab({ position, onClick, open }: FabProps) {
-  const positionStyles: React.CSSProperties = {
+  const style: React.CSSProperties = {
     position: 'fixed',
     bottom: 16,
     [position === 'bottom-left' ? 'left' : 'right']: 16,
@@ -31,11 +29,11 @@ export function Fab({ position, onClick, open }: FabProps) {
   return (
     <button
       onClick={onClick}
-      style={positionStyles}
+      style={style}
       aria-label={open ? 'Close CssTuner' : 'Open CssTuner'}
       title="CssTuner"
     >
-      ✦
+      {'\u2726'}
     </button>
   )
 }

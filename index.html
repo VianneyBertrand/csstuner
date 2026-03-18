@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CssTuner Dev</title>
+  <style>
+    /* Variables shadcn-style pour tester */
+    :root {
+      --background: oklch(1 0 0);
+      --foreground: oklch(0.145 0 0);
+      --primary: oklch(0.205 0.006 286.03);
+      --primary-foreground: oklch(0.985 0 0);
+      --secondary: oklch(0.97 0 0);
+      --secondary-foreground: oklch(0.205 0.006 286.03);
+      --accent: oklch(0.97 0 0);
+      --accent-foreground: oklch(0.205 0.006 286.03);
+      --destructive: oklch(0.577 0.245 27.33);
+      --muted: oklch(0.97 0 0);
+      --muted-foreground: oklch(0.556 0.016 286.03);
+      --card: oklch(1 0 0);
+      --card-foreground: oklch(0.145 0 0);
+      --popover: oklch(1 0 0);
+      --popover-foreground: oklch(0.145 0 0);
+      --border: oklch(0.922 0 0);
+      --input: oklch(0.922 0 0);
+      --ring: oklch(0.708 0.005 286.03);
+      --sidebar-background: oklch(0.985 0 0);
+      --sidebar-foreground: oklch(0.445 0 0);
+      --sidebar-primary: oklch(0.205 0.006 286.03);
+      --sidebar-primary-foreground: oklch(0.985 0 0);
+      --sidebar-accent: oklch(0.97 0 0);
+      --sidebar-accent-foreground: oklch(0.205 0.006 286.03);
+      --sidebar-border: oklch(0.922 0 0);
+      --sidebar-ring: oklch(0.708 0.005 286.03);
+      --chart-1: oklch(0.646 0.222 41.12);
+      --chart-2: oklch(0.6 0.118 184.71);
+      --chart-3: oklch(0.398 0.07 227.39);
+      --chart-4: oklch(0.828 0.189 84.43);
+      --chart-5: oklch(0.769 0.188 70.08);
+      --radius: 0.625rem;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--background);
+      color: var(--foreground);
+      padding: 40px;
+    }
+    h1 { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+    p { color: var(--muted-foreground); margin-bottom: 24px; font-size: 14px; }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; margin-bottom: 32px; }
+
+    .card {
+      background: var(--card);
+      color: var(--card-foreground);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+    .card h2 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+    .card p { font-size: 13px; color: var(--muted-foreground); margin-bottom: 16px; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 16px;
+      border-radius: var(--radius);
+      font-size: 14px;
+      font-weight: 500;
+      border: none;
+      cursor: pointer;
+      transition: opacity 150ms;
+    }
+    .btn:hover { opacity: 0.9; }
+    .btn-primary { background: var(--primary); color: var(--primary-foreground); }
+    .btn-secondary { background: var(--secondary); color: var(--secondary-foreground); }
+    .btn-destructive { background: var(--destructive); color: var(--primary-foreground); }
+    .btn-outline { background: transparent; color: var(--foreground); border: 1px solid var(--border); }
+
+    .buttons { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 32px; }
+
+    .input {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid var(--input);
+      border-radius: var(--radius);
+      background: var(--background);
+      color: var(--foreground);
+      font-size: 14px;
+      outline: none;
+    }
+    .input:focus { border-color: var(--ring); box-shadow: 0 0 0 2px var(--ring); }
+
+    .badge {
+      display: inline-flex;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .badge-accent { background: var(--accent); color: var(--accent-foreground); }
+    .badge-muted { background: var(--muted); color: var(--muted-foreground); }
+
+    .charts { display: flex; gap: 8px; align-items: flex-end; height: 120px; margin-top: 16px; }
+    .bar { width: 32px; border-radius: 4px 4px 0 0; }
+
+    .sidebar-preview {
+      background: var(--sidebar-background);
+      color: var(--sidebar-foreground);
+      border: 1px solid var(--sidebar-border);
+      border-radius: var(--radius);
+      padding: 16px;
+    }
+    .sidebar-item {
+      padding: 6px 10px;
+      border-radius: calc(var(--radius) - 2px);
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .sidebar-item:hover { background: var(--sidebar-accent); color: var(--sidebar-accent-foreground); }
+    .sidebar-item.active { background: var(--sidebar-primary); color: var(--sidebar-primary-foreground); }
+  </style>
+</head>
+<body>
+  <h1>CssTuner Demo</h1>
+  <p>Page de test avec des CSS variables shadcn. Ouvre l'overlay en bas a gauche.</p>
+
+  <!-- Buttons -->
+  <div class="buttons">
+    <button class="btn btn-primary">Primary</button>
+    <button class="btn btn-secondary">Secondary</button>
+    <button class="btn btn-destructive">Destructive</button>
+    <button class="btn btn-outline">Outline</button>
+    <span class="badge badge-accent">Accent</span>
+    <span class="badge badge-muted">Muted</span>
+  </div>
+
+  <!-- Cards -->
+  <div class="grid">
+    <div class="card">
+      <h2>Card Title</h2>
+      <p>This is a card component using --card and --card-foreground variables.</p>
+      <input class="input" placeholder="Type something..." />
+    </div>
+    <div class="card">
+      <h2>Charts Preview</h2>
+      <p>Colors from --chart-1 to --chart-5.</p>
+      <div class="charts">
+        <div class="bar" style="height: 80%; background: var(--chart-1);"></div>
+        <div class="bar" style="height: 60%; background: var(--chart-2);"></div>
+        <div class="bar" style="height: 100%; background: var(--chart-3);"></div>
+        <div class="bar" style="height: 45%; background: var(--chart-4);"></div>
+        <div class="bar" style="height: 70%; background: var(--chart-5);"></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Sidebar Preview</h2>
+      <div class="sidebar-preview">
+        <div class="sidebar-item active">Dashboard</div>
+        <div class="sidebar-item">Settings</div>
+        <div class="sidebar-item">Users</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="root"></div>
+  <script type="module" src="/dev/main.tsx"></script>
+</body>
+</html>

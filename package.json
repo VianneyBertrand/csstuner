@@ -8,16 +8,20 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
-      "require": "./dist/index.cjs",
-      "types": "./dist/index.d.ts"
+      "require": "./dist/index.cjs"
     }
+  },
+  "bin": {
+    "csstuner": "./dist/server.js"
   },
   "files": [
     "dist"
   ],
   "scripts": {
     "dev": "tsup --watch",
+    "dev:demo": "vite dev",
     "build": "tsup",
     "lint": "tsc --noEmit"
   },
@@ -37,11 +41,17 @@
     "react-dom": ">=18"
   },
   "devDependencies": {
+    "@types/node": "^25.5.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^6.0.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "tsup": "^8.0.0",
-    "typescript": "^5.7.0"
+    "typescript": "^5.7.0",
+    "vite": "^8.0.0"
+  },
+  "dependencies": {
+    "culori": "^4.0.2"
   }
 }

@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { parseColor, isInSrgbGamut, formatAs, detectColorFormat, clampToSrgb } from '../core/colorConverter'
-import { formatHex, converter } from 'culori'
+import { formatHex, converter, type Color } from 'culori'
 import type { ColorFormat } from '../core/types'
 
 const toSrgb = converter('rgb')
@@ -69,7 +69,7 @@ export function ColorPicker({ value, onChange }: ColorPickerProps) {
       for (let x = 0; x < AREA_W; x++) {
         const c = (x / (AREA_W - 1)) * MAX_C
         const color = { mode: 'oklch' as const, l, c, h: hue }
-        const rgb = toSrgb(clampToSrgb(color))
+        const rgb = toSrgb(clampToSrgb(color) as unknown as Color) as { r?: number; g?: number; b?: number } | undefined
         const idx = (y * AREA_W + x) * 4
         data[idx] = Math.round((rgb?.r ?? 0) * 255)
         data[idx + 1] = Math.round((rgb?.g ?? 0) * 255)

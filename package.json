@@ -17,13 +17,15 @@
     "csstuner": "./dist/server.js"
   },
   "files": [
-    "dist"
+    "dist",
+    "scripts"
   ],
   "scripts": {
     "dev": "tsup --watch",
     "dev:demo": "vite dev",
     "build": "tsup",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "postinstall": "node scripts/postinstall.js || true"
   },
   "keywords": [
     "css",

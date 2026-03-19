@@ -20,8 +20,16 @@ export function VarGroup({ group, modifiedVars, onVarChange, onVarReset }: VarGr
       <button
         onClick={() => setCollapsed(!collapsed)}
         style={styles.header}
+        aria-expanded={!collapsed}
+        aria-label={`${group.name}, ${group.vars.length} variables`}
       >
-        <span style={styles.arrow}>{collapsed ? '\u25b6' : '\u25bc'}</span>
+        <span style={{
+          ...styles.arrow,
+          transform: collapsed ? 'rotate(-90deg)' : 'rotate(0deg)',
+          transition: 'transform 150ms ease',
+        }}>
+          {'\u25BE'}
+        </span>
         <span style={styles.groupName}>{group.name}</span>
         <span style={styles.count}>{group.vars.length}</span>
       </button>
@@ -36,12 +44,19 @@ export function VarGroup({ group, modifiedVars, onVarChange, onVarReset }: VarGr
 
             return (
               <div key={v.name} style={styles.varItem}>
-                <div style={styles.varRow}>
+                <div style={{
+                  ...styles.varRow,
+                  ...(isPickerOpen ? styles.varRowActive : {}),
+                }}>
                   {/* Swatch ou valeur */}
                   {isColor ? (
                     <button
                       onClick={() => setOpenPicker(isPickerOpen ? null : v.name)}
-                      style={{ ...styles.colorSwatch, backgroundColor: v.value }}
+                      style={{
+                        ...styles.colorSwatch,
+                        backgroundColor: v.value,
+                        ...(isPickerOpen ? styles.swatchActive : {}),
+                      }}
                       aria-label={`Edit ${varToLabel(v.name)}`}
                     />
                   ) : (
@@ -50,11 +65,16 @@ export function VarGroup({ group, modifiedVars, onVarChange, onVarReset }: VarGr
                       value={v.value}
                       onChange={e => onVarChange(v.name, e.target.value)}
                       style={styles.valueInput}
+                      aria-label={varToLabel(v.name)}
                     />
                   )}
 
                   {/* Label */}
-                  <span style={{ ...styles.varLabel, ...(isModified ? styles.modifiedLabel : {}) }}>
+                  <span style={{
+                    ...styles.varLabel,
+                    ...(isModified ? styles.modifiedLabel : {}),
+                    ...(isPickerOpen ? styles.activeLabel : {}),
+                  }}>
                     {varToLabel(v.name)}
                   </span>
 
@@ -75,10 +95,12 @@ export function VarGroup({ group, modifiedVars, onVarChange, onVarReset }: VarGr
 
                 {/* Color picker inline */}
                 {isPickerOpen && isColor && (
-                  <ColorPicker
-                    value={v.value}
-                    onChange={val => onVarChange(v.name, val)}
-                  />
+                  <div style={styles.pickerWrap}>
+                    <ColorPicker
+                      value={v.value}
+                      onChange={val => onVarChange(v.name, val)}
+                    />
+                  </div>
                 )}
               </div>
             )
@@ -91,39 +113,48 @@ export function VarGroup({ group, modifiedVars, onVarChange, onVarReset }: VarGr
 
 const styles: Record<string, React.CSSProperties> = {
   container: {
-    marginBottom: 4,
+    marginBottom: 2,
   },
   header: {
     display: 'flex',
     alignItems: 'center',
     gap: 6,
     width: '100%',
-    padding: '6px 0',
+    padding: '7px 4px',
     background: 'none',
     border: 'none',
-    color: '#fafafa',
+    color: '#e4e4e7',
     cursor: 'pointer',
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: 600,
     textAlign: 'left',
+    borderRadius: 4,
+    transition: 'background 100ms ease',
+    letterSpacing: '0.2px',
+    textTransform: 'uppercase' as React.CSSProperties['textTransform'],
   },
   arrow: {
-    fontSize: 8,
+    fontSize: 9,
     color: '#71717a',
     width: 10,
+    display: 'inline-block',
+    textAlign: 'center',
   },
   groupName: {
     flex: 1,
   },
   count: {
-    fontSize: 11,
+    fontSize: 10,
     color: '#71717a',
+    fontWeight: 500,
+    fontFamily: "'SF Mono', 'Fira Code', 'Cascadia Code', monospace",
   },
   varList: {
-    paddingLeft: 16,
+    paddingLeft: 6,
     display: 'flex',
     flexDirection: 'column',
-    gap: 2,
+    gap: 0,
+    marginBottom: 4,
   },
   varItem: {
     display: 'flex',
@@ -133,45 +164,72 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     gap: 8,
-    padding: '3px 0',
+    padding: '4px 6px',
+    borderRadius: 5,
+    transition: 'background 100ms ease',
+  },
+  varRowActive: {
+    background: 'rgba(255,255,255,0.03)',
   },
   colorSwatch: {
-    width: 20,
-    height: 20,
-    borderRadius: 4,
-    border: '1px solid #3f3f46',
+    width: 24,
+    height: 24,
+    borderRadius: 5,
+    border: '1px solid rgba(255,255,255,0.08)',
     cursor: 'pointer',
     flexShrink: 0,
     padding: 0,
+    transition: 'transform 100ms ease, box-shadow 150ms ease',
+    boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.15)',
+  },
+  swatchActive: {
+    boxShadow: '0 0 0 2px #09090b, 0 0 0 3px rgba(255,255,255,0.2), inset 0 0 0 1px rgba(0,0,0,0.15)',
   },
   varLabel: {
     flex: 1,
     fontSize: 12,
     color: '#a1a1aa',
+    transition: 'color 100ms ease',
   },
   modifiedLabel: {
-    color: '#fafafa',
+    color: '#e4e4e7',
     fontWeight: 500,
+  },
+  activeLabel: {
+    color: '#a1a1aa',
   },
   resetButton: {
     background: 'none',
     border: 'none',
     color: '#71717a',
     cursor: 'pointer',
-    fontSize: 14,
-    padding: '0 2px',
+    fontSize: 13,
+    padding: '4px 6px',
+    minWidth: 28,
+    minHeight: 28,
     flexShrink: 0,
+    borderRadius: 4,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'color 100ms ease, background 100ms ease',
   },
   valueInput: {
-    width: 70,
-    padding: '2px 6px',
-    fontSize: 12,
-    fontFamily: 'monospace',
-    background: '#18181b',
-    border: '1px solid #3f3f46',
+    width: 72,
+    padding: '3px 6px',
+    fontSize: 11,
+    fontFamily: "'SF Mono', 'Fira Code', 'Cascadia Code', monospace",
+    background: '#0c0c0e',
+    border: '1px solid #1e1e21',
     borderRadius: 4,
-    color: '#fafafa',
+    color: '#e4e4e7',
     outline: 'none',
     flexShrink: 0,
+    transition: 'border-color 150ms ease',
+    letterSpacing: '-0.3px',
+  },
+  pickerWrap: {
+    paddingLeft: 6,
+    paddingBottom: 4,
   },
 }

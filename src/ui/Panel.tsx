@@ -44,7 +44,6 @@ function findReferencedVars(
           }
         }
       } else if ('cssRules' in rule) {
-        // @media, @layer, @supports, @container, etc.
         walkRules((rule as CSSGroupingRule).cssRules)
       }
     }
@@ -84,10 +83,8 @@ function findMatchingVars(
 ): string[] {
   const tracked = new Set(trackedVarNames)
 
-  // Variables referencees par les regles CSS de l'element
   const matches = findReferencedVars(element, tracked)
 
-  // Scanner aussi les enfants pour les conteneurs
   if (element.children.length > 0) {
     const children = element.querySelectorAll('*')
     children.forEach(child => {
@@ -109,11 +106,9 @@ export function Panel({ vars, persist, companionUrl, onClose, width = 300 }: Pan
   })
 
   const [inspecting, setInspecting] = useState(false)
-  // Variables trouvees par l'inspect (noms)
   const [inspectedVarNames, setInspectedVarNames] = useState<string[]>([])
   const hasChanges = Object.keys(modifiedVars).length > 0
 
-  // Liste plate de toutes les variables trackees
   const allVars = groups.flatMap(g => g.vars)
   const allVarNames = allVars.map(v => v.name)
 
@@ -122,10 +117,8 @@ export function Panel({ vars, persist, companionUrl, onClose, width = 300 }: Pan
     if (!inspecting) return
 
     const isCssTunerElement = (target: HTMLElement) => {
-      // Le shadow host est un enfant de #root
       const root = document.getElementById('root')
       if (!root) return false
-      // Verifier si le target est le shadow host ou un de ses ancetres contient le shadow host
       return root.contains(target)
     }
 
@@ -137,7 +130,6 @@ export function Panel({ vars, persist, companionUrl, onClose, width = 300 }: Pan
       e.stopPropagation()
 
       const matches = findMatchingVars(target, allVarNames)
-      // Seulement remplacer si on a trouve des variables
       if (matches.length > 0) {
         setInspectedVarNames(matches)
       }
@@ -146,8 +138,8 @@ export function Panel({ vars, persist, companionUrl, onClose, width = 300 }: Pan
     const onMouseOver = (e: MouseEvent) => {
       const target = e.target as HTMLElement
       if (isCssTunerElement(target)) return
-      target.style.outline = '2px solid #3b82f6'
-      target.style.outlineOffset = '-2px'
+      target.style.outline = '1.5px solid rgba(99,102,241,0.6)'
+      target.style.outlineOffset = '1px'
     }
 
     const onMouseOut = (e: MouseEvent) => {
@@ -181,20 +173,18 @@ export function Panel({ vars, persist, companionUrl, onClose, width = 300 }: Pan
   const toggleInspect = useCallback(() => {
     setInspecting(prev => {
       if (!prev) {
-        // Entrer en mode inspect: reset les resultats
         setInspectedVarNames([])
       }
       return !prev
     })
   }, [])
 
-  // Variables resolues pour la vue inspect
   const inspectedVars: CssVariable[] = inspectedVarNames
     .map(name => allVars.find(v => v.name === name))
     .filter((v): v is CssVariable => v !== undefined)
 
   return (
-    <div style={styles.panel}>
+    <div style={styles.panel} role="region" aria-label="CSS Variable Tuner">
       {/* Header */}
       <div style={styles.header}>
         <div style={styles.headerLeft}>
@@ -207,24 +197,37 @@ export function Panel({ vars, persist, companionUrl, onClose, width = 300 }: Pan
           <button
             onClick={toggleInspect}
             style={{
-              ...styles.inspectButton,
+              ...styles.headerButton,
               ...(inspecting ? styles.inspectButtonActive : {}),
             }}
             aria-label="Inspect element"
-            title="Inspecter un element"
+            aria-pressed={inspecting}
+            title="Inspect element"
           >
-            {'\u{1F50D}'}
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
           </button>
           {!inspecting && hasChanges && (
-            <button onClick={resetAll} style={styles.resetAll} aria-label="Reset all">
-              Reset
+            <button onClick={resetAll} style={styles.headerButton} aria-label="Reset all" title="Reset all">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                <path d="M3 3v5h5"/>
+              </svg>
             </button>
           )}
-          <button onClick={onClose} style={styles.closeButton} aria-label="Close panel">
-            {'\u2715'}
+          <button onClick={onClose} style={styles.headerButton} aria-label="Close panel" title="Close panel">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
           </button>
         </div>
       </div>
+
+      {/* Accent line */}
+      <div style={styles.accentLine} />
 
       {/* Contenu */}
       <div style={styles.content}>
@@ -232,12 +235,17 @@ export function Panel({ vars, persist, companionUrl, onClose, width = 300 }: Pan
           // --- Vue inspect ---
           inspectedVars.length === 0 ? (
             <div style={styles.inspectEmpty}>
-              <div style={styles.inspectEmptyIcon}>{'\u{1F50D}'}</div>
+              <div style={styles.inspectEmptyRing}>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#3f3f46' }}>
+                  <circle cx="11" cy="11" r="8"/>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+              </div>
               <p style={styles.inspectEmptyText}>
-                Cliquez sur un element de la page pour modifier ses couleurs
+                Select an element to inspect its CSS variables
               </p>
               <button onClick={toggleInspect} style={styles.exitInspectButton}>
-                Quitter l'inspection
+                Exit inspection
               </button>
             </div>
           ) : (
@@ -246,8 +254,8 @@ export function Panel({ vars, persist, companionUrl, onClose, width = 300 }: Pan
                 <p style={styles.inspectResultsCount}>
                   {inspectedVars.length} variable{inspectedVars.length > 1 ? 's' : ''}
                 </p>
-                <button onClick={toggleInspect} style={styles.exitInspectSmall}>
-                  Quitter
+                <button onClick={toggleInspect} style={styles.exitInspectSmall} aria-label="Exit inspection mode">
+                  Exit
                 </button>
               </div>
               {inspectedVars.map(v => {
@@ -255,7 +263,10 @@ export function Panel({ vars, persist, companionUrl, onClose, width = 300 }: Pan
                 return (
                   <div key={v.name} style={styles.inspectVarItem}>
                     <div style={styles.inspectVarHeader}>
-                      <div style={{ ...styles.inspectSwatch, backgroundColor: v.value }} />
+                      <div style={{
+                        ...styles.inspectSwatch,
+                        backgroundColor: v.value,
+                      }} aria-hidden="true" />
                       <span style={styles.inspectVarName}>{varToLabel(v.name)}</span>
                       {isModified && (
                         <button
@@ -281,7 +292,7 @@ export function Panel({ vars, persist, companionUrl, onClose, width = 300 }: Pan
         ) : (
           // --- Vue normale (groupes) ---
           groups.length === 0 ? (
-            <p style={styles.empty}>Aucune CSS variable detectee sur :root</p>
+            <p style={styles.empty}>No CSS variables found on :root</p>
           ) : (
             groups.map(group => (
               <VarGroup
@@ -311,21 +322,27 @@ const styles: Record<string, React.CSSProperties> = {
     width: 300,
     height: '100vh',
     background: '#09090b',
-    color: '#fafafa',
+    color: '#e4e4e7',
     borderRadius: 0,
-    boxShadow: '2px 0 12px rgba(0,0,0,0.2)',
+    borderRight: '1px solid #1e1e21',
     overflow: 'hidden',
     display: 'flex',
     flexDirection: 'column',
-    fontFamily: 'system-ui, -apple-system, sans-serif',
-    fontSize: 13,
+    fontFamily: "'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif",
+    fontSize: 12,
+    WebkitFontSmoothing: 'antialiased',
   },
   header: {
-    padding: '10px 16px',
-    borderBottom: '1px solid #27272a',
+    padding: '12px 14px',
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  accentLine: {
+    height: 1,
+    background: 'linear-gradient(90deg, #6366f1 0%, #8b5cf6 40%, #ec4899 70%, transparent 100%)',
+    opacity: 0.4,
+    flexShrink: 0,
   },
   headerLeft: {
     display: 'flex',
@@ -335,61 +352,53 @@ const styles: Record<string, React.CSSProperties> = {
   headerRight: {
     display: 'flex',
     alignItems: 'center',
-    gap: 6,
+    gap: 2,
   },
   title: {
-    fontWeight: 600,
-    fontSize: 14,
+    fontWeight: 700,
+    fontSize: 13,
+    letterSpacing: '-0.3px',
+    color: '#fafafa',
   },
   badge: {
-    fontSize: 10,
+    fontSize: 9,
     padding: '2px 6px',
     borderRadius: 4,
-    background: '#27272a',
-    color: '#a1a1aa',
-    fontWeight: 500,
+    background: 'rgba(99,102,241,0.1)',
+    color: '#818cf8',
+    fontWeight: 600,
+    letterSpacing: '0.3px',
+    textTransform: 'uppercase' as React.CSSProperties['textTransform'],
   },
-  resetAll: {
+  headerButton: {
     background: 'none',
     border: 'none',
     color: '#71717a',
     cursor: 'pointer',
-    fontSize: 11,
-    padding: '2px 6px',
+    padding: 6,
+    borderRadius: 6,
+    minWidth: 28,
+    minHeight: 28,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'color 100ms ease, background 100ms ease',
   },
-  closeButton: {
-    background: 'none',
-    border: 'none',
-    color: '#71717a',
-    cursor: 'pointer',
-    fontSize: 14,
-    padding: '0 2px',
+  inspectButtonActive: {
+    color: '#818cf8',
+    background: 'rgba(99,102,241,0.1)',
   },
   content: {
-    padding: '8px 16px',
+    padding: '6px 12px',
     flex: 1,
     overflowY: 'auto',
   },
   empty: {
     color: '#71717a',
-    fontSize: 12,
+    fontSize: 11,
     textAlign: 'center',
-    padding: '24px 0',
-  },
-  inspectButton: {
-    background: 'none',
-    border: '1px solid #3f3f46',
-    borderRadius: 4,
-    color: '#a1a1aa',
-    cursor: 'pointer',
-    fontSize: 12,
-    padding: '2px 5px',
-    lineHeight: 1,
-  },
-  inspectButtonActive: {
-    background: '#3b82f6',
-    borderColor: '#3b82f6',
-    color: '#fff',
+    padding: '32px 0',
+    fontStyle: 'italic',
   },
   // Inspect empty state
   inspectEmpty: {
@@ -397,28 +406,38 @@ const styles: Record<string, React.CSSProperties> = {
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: '48px 16px',
-    gap: 12,
+    padding: '56px 24px',
+    gap: 16,
   },
-  inspectEmptyIcon: {
-    fontSize: 32,
-    opacity: 0.4,
+  inspectEmptyRing: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    background: '#111113',
+    border: '1px solid #1e1e21',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   inspectEmptyText: {
-    color: '#a1a1aa',
-    fontSize: 13,
+    color: '#71717a',
+    fontSize: 12,
     textAlign: 'center',
-    lineHeight: 1.5,
+    lineHeight: 1.6,
+    maxWidth: 200,
   },
   exitInspectButton: {
-    marginTop: 8,
-    padding: '6px 16px',
-    background: '#27272a',
-    border: '1px solid #3f3f46',
+    marginTop: 4,
+    padding: '6px 14px',
+    background: '#111113',
+    border: '1px solid #1e1e21',
     borderRadius: 6,
-    color: '#a1a1aa',
+    color: '#71717a',
     cursor: 'pointer',
-    fontSize: 12,
+    fontSize: 11,
+    fontWeight: 500,
+    transition: 'all 150ms ease',
+    fontFamily: 'inherit',
   },
   // Inspect results
   inspectResults: {
@@ -430,26 +449,34 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 6,
+    padding: '0 2px',
   },
   inspectResultsCount: {
     color: '#71717a',
-    fontSize: 11,
+    fontSize: 10,
+    fontWeight: 600,
+    letterSpacing: '0.3px',
+    textTransform: 'uppercase' as React.CSSProperties['textTransform'],
   },
   exitInspectSmall: {
-    background: '#27272a',
-    border: '1px solid #3f3f46',
+    background: '#111113',
+    border: '1px solid #1e1e21',
     borderRadius: 4,
-    color: '#a1a1aa',
+    color: '#71717a',
     cursor: 'pointer',
     fontSize: 10,
-    padding: '2px 8px',
+    fontWeight: 500,
+    padding: '3px 8px',
+    transition: 'all 150ms ease',
+    fontFamily: 'inherit',
   },
   inspectVarItem: {
-    background: '#18181b',
+    background: '#0e0e10',
+    border: '1px solid #1e1e21',
     borderRadius: 8,
     padding: '10px 12px',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   inspectVarHeader: {
     display: 'flex',
@@ -457,25 +484,34 @@ const styles: Record<string, React.CSSProperties> = {
     gap: 8,
   },
   inspectSwatch: {
-    width: 20,
-    height: 20,
-    borderRadius: 4,
-    border: '1px solid #3f3f46',
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    border: '1px solid rgba(255,255,255,0.08)',
     flexShrink: 0,
+    boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.2)',
   },
   inspectVarName: {
     flex: 1,
     fontSize: 12,
     fontWeight: 500,
-    color: '#fafafa',
+    color: '#e4e4e7',
+    letterSpacing: '-0.1px',
   },
   resetButton: {
     background: 'none',
     border: 'none',
     color: '#71717a',
     cursor: 'pointer',
-    fontSize: 14,
-    padding: '0 2px',
+    fontSize: 13,
+    padding: '4px 6px',
+    minWidth: 28,
+    minHeight: 28,
     flexShrink: 0,
+    borderRadius: 4,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'color 100ms ease',
   },
 }

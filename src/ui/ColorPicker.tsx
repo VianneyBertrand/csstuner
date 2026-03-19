@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
-import { parseColor, formatOklch, isInSrgbGamut, formatAs, detectColorFormat, clampToSrgb } from '../core/colorConverter'
+import { parseColor, isInSrgbGamut, formatAs, detectColorFormat, clampToSrgb } from '../core/colorConverter'
 import { formatHex, converter } from 'culori'
 import type { ColorFormat } from '../core/types'
 
@@ -79,13 +79,24 @@ export function ColorPicker({ value, onChange }: ColorPickerProps) {
     }
     ctx.putImageData(imgData, 0, 0)
 
-    // Crosshair
+    // Crosshair — refined circle with inner dot
     const cx = (chroma / MAX_C) * (AREA_W - 1)
     const cy = (1 - lightness) * (AREA_H - 1)
+    const ringColor = lightness > 0.5 ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.85)'
+    const innerColor = lightness > 0.5 ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.4)'
+
+    // Outer ring
     ctx.beginPath()
-    ctx.arc(cx, cy, 5, 0, 2 * Math.PI)
-    ctx.strokeStyle = lightness > 0.5 ? '#000' : '#fff'
+    ctx.arc(cx, cy, 6, 0, 2 * Math.PI)
+    ctx.strokeStyle = ringColor
     ctx.lineWidth = 1.5
+    ctx.stroke()
+
+    // White/black inner ring for contrast
+    ctx.beginPath()
+    ctx.arc(cx, cy, 4.5, 0, 2 * Math.PI)
+    ctx.strokeStyle = innerColor
+    ctx.lineWidth = 1
     ctx.stroke()
   }, [hue, lightness, chroma])
 
@@ -114,12 +125,14 @@ export function ColorPicker({ value, onChange }: ColorPickerProps) {
     }
     ctx.putImageData(imgData, 0, 0)
 
-    // Indicator
+    // Refined indicator — small triangle/line
     const hx = (hue / 360) * (AREA_W - 1)
     ctx.beginPath()
-    ctx.rect(hx - 2, 0, 4, HUE_H)
-    ctx.strokeStyle = '#fff'
-    ctx.lineWidth = 1.5
+    ctx.roundRect(hx - 1.5, 0, 3, HUE_H, 1)
+    ctx.fillStyle = '#fff'
+    ctx.fill()
+    ctx.strokeStyle = 'rgba(0,0,0,0.5)'
+    ctx.lineWidth = 0.5
     ctx.stroke()
   }, [hue])
 
@@ -212,8 +225,6 @@ export function ColorPicker({ value, onChange }: ColorPickerProps) {
     }
   }, [onChange])
 
-  const previewColor = formatOklch({ mode: 'oklch', l: lightness, c: chroma, h: hue })
-
   return (
     <div style={styles.container}>
       {/* 2D color area: lightness (Y) × chroma (X) */}
@@ -223,6 +234,9 @@ export function ColorPicker({ value, onChange }: ColorPickerProps) {
         height={AREA_H}
         style={styles.areaCanvas}
         onMouseDown={onAreaDown}
+        role="img"
+        aria-label="Color picker: lightness and chroma"
+        tabIndex={0}
       />
 
       {/* Hue strip */}
@@ -232,146 +246,162 @@ export function ColorPicker({ value, onChange }: ColorPickerProps) {
         height={HUE_H}
         style={styles.hueCanvas}
         onMouseDown={onHueDown}
+        role="img"
+        aria-label="Hue selector"
+        tabIndex={0}
       />
 
-      {/* Swatch + gamut warning */}
+      {/* Value input + gamut warning */}
       <div style={styles.previewRow}>
-        <div style={{ ...styles.swatch, backgroundColor: previewColor }} />
-        {!inGamut && <span style={styles.gamutWarning}>hors sRGB</span>}
-      </div>
-
-      {/* Slider L */}
-      <div style={styles.sliderRow}>
-        <label style={styles.label}>L</label>
         <input
-          type="range"
-          min="0"
-          max="1"
-          step="0.005"
-          value={lightness}
-          onChange={handleLightness}
-          style={styles.slider}
+          type="text"
+          value={textInput}
+          onChange={handleTextInput}
+          placeholder="hex, hsl, rgb, oklch..."
+          style={styles.textInput}
+          aria-label="Color value"
         />
-        <span style={styles.sliderValue}>{(lightness * 100).toFixed(0)}%</span>
+        {!inGamut && (
+          <span style={styles.gamutWarning} title="Color is outside sRGB gamut" aria-label="Outside sRGB gamut">P3</span>
+        )}
       </div>
 
-      {/* Slider C */}
-      <div style={styles.sliderRow}>
-        <label style={styles.label}>C</label>
-        <input
-          type="range"
-          min="0"
-          max="0.4"
-          step="0.002"
-          value={chroma}
-          onChange={handleChroma}
-          style={styles.slider}
-        />
-        <span style={styles.sliderValue}>{chroma.toFixed(3)}</span>
-      </div>
+      {/* Sliders */}
+      <div style={styles.slidersContainer}>
+        <div style={styles.sliderRow}>
+          <label style={styles.label}>L</label>
+          <input
+            type="range"
+            min="0"
+            max="1"
+            step="0.005"
+            value={lightness}
+            onChange={handleLightness}
+            style={styles.slider}
+            aria-label="Lightness"
+            aria-valuetext={`${(lightness * 100).toFixed(0)}%`}
+          />
+          <span style={styles.sliderValue} aria-hidden="true">{(lightness * 100).toFixed(0)}%</span>
+        </div>
 
-      {/* Slider H */}
-      <div style={styles.sliderRow}>
-        <label style={styles.label}>H</label>
-        <input
-          type="range"
-          min="0"
-          max="360"
-          step="1"
-          value={hue}
-          onChange={handleHue}
-          style={styles.slider}
-        />
-        <span style={styles.sliderValue}>{hue.toFixed(0)}</span>
-      </div>
+        <div style={styles.sliderRow}>
+          <label style={styles.label}>C</label>
+          <input
+            type="range"
+            min="0"
+            max="0.4"
+            step="0.002"
+            value={chroma}
+            onChange={handleChroma}
+            style={styles.slider}
+            aria-label="Chroma"
+            aria-valuetext={chroma.toFixed(3)}
+          />
+          <span style={styles.sliderValue} aria-hidden="true">{chroma.toFixed(3)}</span>
+        </div>
 
-      {/* Input texte multi-format */}
-      <input
-        type="text"
-        value={textInput}
-        onChange={handleTextInput}
-        placeholder="hex, hsl, rgb, oklch..."
-        style={styles.textInput}
-      />
+        <div style={styles.sliderRow}>
+          <label style={styles.label}>H</label>
+          <input
+            type="range"
+            min="0"
+            max="360"
+            step="1"
+            value={hue}
+            onChange={handleHue}
+            style={styles.slider}
+            aria-label="Hue"
+            aria-valuetext={`${hue.toFixed(0)} degrees`}
+          />
+          <span style={styles.sliderValue} aria-hidden="true">{hue.toFixed(0)}°</span>
+        </div>
+      </div>
     </div>
   )
 }
 
 const styles: Record<string, React.CSSProperties> = {
   container: {
-    padding: '8px 0',
+    padding: '10px 0 4px',
     display: 'flex',
     flexDirection: 'column',
-    gap: 6,
+    gap: 8,
   },
   areaCanvas: {
     width: AREA_W,
     height: AREA_H,
-    borderRadius: 4,
+    borderRadius: 6,
     cursor: 'crosshair',
     display: 'block',
+    border: '1px solid rgba(255,255,255,0.06)',
   },
   hueCanvas: {
     width: AREA_W,
     height: HUE_H,
-    borderRadius: 3,
+    borderRadius: 4,
     cursor: 'crosshair',
     display: 'block',
+    border: '1px solid rgba(255,255,255,0.06)',
   },
   previewRow: {
     display: 'flex',
     alignItems: 'center',
-    gap: 8,
-  },
-  swatch: {
-    width: 24,
-    height: 24,
-    borderRadius: 4,
-    border: '1px solid #3f3f46',
-    flexShrink: 0,
+    gap: 6,
   },
   gamutWarning: {
-    fontSize: 11,
+    fontSize: 9,
+    fontWeight: 600,
     color: '#f59e0b',
-    fontStyle: 'italic',
+    background: 'rgba(245,158,11,0.1)',
+    padding: '1px 5px',
+    borderRadius: 3,
+    letterSpacing: '0.5px',
+    flexShrink: 0,
+  },
+  slidersContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 2,
   },
   sliderRow: {
     display: 'flex',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
   },
   label: {
-    width: 14,
-    fontSize: 11,
-    color: '#a1a1aa',
+    width: 12,
+    fontSize: 10,
+    color: '#71717a',
     fontWeight: 600,
     flexShrink: 0,
+    fontFamily: "'SF Mono', 'Fira Code', 'Cascadia Code', monospace",
+    letterSpacing: '0.3px',
   },
   slider: {
     flex: 1,
-    height: 4,
-    appearance: 'none' as React.CSSProperties['appearance'],
-    background: '#27272a',
-    borderRadius: 2,
-    outline: 'none',
-    cursor: 'pointer',
+    height: 14,
   },
   sliderValue: {
-    width: 42,
-    fontSize: 11,
-    color: '#a1a1aa',
+    width: 38,
+    fontSize: 10,
+    color: '#71717a',
     textAlign: 'right',
     flexShrink: 0,
+    fontFamily: "'SF Mono', 'Fira Code', 'Cascadia Code', monospace",
+    letterSpacing: '-0.2px',
   },
   textInput: {
-    width: '100%',
-    padding: '4px 8px',
-    fontSize: 12,
-    fontFamily: 'monospace',
-    background: '#18181b',
-    border: '1px solid #3f3f46',
-    borderRadius: 4,
-    color: '#fafafa',
+    flex: 1,
+    minWidth: 0,
+    padding: '5px 8px',
+    fontSize: 11,
+    fontFamily: "'SF Mono', 'Fira Code', 'Cascadia Code', monospace",
+    background: '#0c0c0e',
+    border: '1px solid #27272a',
+    borderRadius: 5,
+    color: '#e4e4e7',
     outline: 'none',
+    letterSpacing: '-0.2px',
+    transition: 'border-color 150ms ease',
   },
 }

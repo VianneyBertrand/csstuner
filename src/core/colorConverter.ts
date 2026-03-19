@@ -19,11 +19,17 @@ export function parseColor(input: string): Oklch | null {
 
 /**
  * Formate une couleur OKLCH en string oklch()
+ * Precision suffisante pour eviter le drift visuel (6 decimales L/C, 2 H)
+ * Supporte le canal alpha
  */
 export function formatOklch(color: Oklch): string {
-  const l = round(color.l, 4)
-  const c = round(color.c, 4)
+  const l = round(color.l, 6)
+  const c = round(color.c, 6)
   const h = round(color.h ?? 0, 2)
+  const a = color.alpha
+  if (a !== undefined && a < 1) {
+    return `oklch(${l} ${c} ${h} / ${round(a, 4)})`
+  }
   return `oklch(${l} ${c} ${h})`
 }
 

@@ -1,7 +1,9 @@
 import type { CssVariable } from './types'
 
 /**
- * Lit toutes les CSS custom properties declarees dans :root
+ * Lit toutes les CSS custom properties declarees dans :root.
+ * Utilise la valeur authored (rule.style) quand disponible pour eviter
+ * les conversions du navigateur (ex: oklch → rgb). Fallback sur computed.
  */
 export function readAllCssVars(): CssVariable[] {
   if (typeof window === 'undefined') return []
@@ -17,10 +19,13 @@ export function readAllCssVars(): CssVariable[] {
           for (const prop of Array.from(rule.style)) {
             if (prop.startsWith('--') && !seen.has(prop)) {
               seen.add(prop)
-              vars.push({
-                name: prop,
-                value: computed.getPropertyValue(prop).trim(),
-              })
+              // Preferer la valeur authored pour garder le format original
+              const authored = rule.style.getPropertyValue(prop).trim()
+              // Si la valeur authored contient var(), on prend la computed
+              const value = authored && !authored.includes('var(')
+                ? authored
+                : computed.getPropertyValue(prop).trim()
+              vars.push({ name: prop, value })
             }
           }
         }

@@ -13,18 +13,18 @@ export function Fab({ position, onClick, open }: FabProps) {
     width: 40,
     height: 40,
     borderRadius: 11,
-    border: '1px solid rgba(255,255,255,0.06)',
+    border: '1px solid rgba(0,0,0,0.08)',
     background: open
-      ? 'linear-gradient(145deg, #1c1c1f, #111113)'
-      : 'linear-gradient(145deg, #18181b, #09090b)',
-    color: open ? '#a1a1aa' : '#e4e4e7',
+      ? '#e8e8ec'
+      : '#fff',
+    color: open ? '#9ca3af' : '#1a1a1a',
     cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     boxShadow: open
-      ? '0 2px 12px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04)'
-      : '0 4px 20px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.03), inset 0 1px 0 rgba(255,255,255,0.06)',
+      ? '0 2px 8px rgba(0,0,0,0.1)'
+      : '0 4px 16px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.06)',
     transition: 'transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 200ms ease, background 200ms ease',
     transform: open ? 'rotate(45deg) scale(0.95)' : 'none',
     fontSize: 15,

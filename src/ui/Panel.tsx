@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import type { CssTunerProps, CssVariable } from '../core/types'
 import { useCssVars } from './hooks/useCssVars'
 import { isColorValue, varToLabel } from '../core/cssVarReader'
@@ -183,15 +183,25 @@ export function Panel({ vars, persist, companionUrl, onClose, width = 300 }: Pan
     .map(name => allVars.find(v => v.name === name))
     .filter((v): v is CssVariable => v !== undefined)
 
+  // Scrollbar: visible only while scrolling
+  const contentRef = useRef<HTMLDivElement>(null)
+  const scrollTimer = useRef<ReturnType<typeof setTimeout>>(null)
+  const handleScroll = useCallback(() => {
+    const el = contentRef.current
+    if (!el) return
+    el.classList.add('scrolling')
+    if (scrollTimer.current) clearTimeout(scrollTimer.current)
+    scrollTimer.current = setTimeout(() => {
+      el.classList.remove('scrolling')
+    }, 800)
+  }, [])
+
   return (
     <div style={styles.panel} role="region" aria-label="CSS Variable Tuner">
       {/* Header */}
       <div style={styles.header}>
         <div style={styles.headerLeft}>
           <span style={styles.title}>CssTuner</span>
-          {framework !== 'unknown' && !inspecting && (
-            <span style={styles.badge}>{framework}</span>
-          )}
         </div>
         <div style={styles.headerRight}>
           <button
@@ -204,9 +214,11 @@ export function Panel({ vars, persist, companionUrl, onClose, width = 300 }: Pan
             aria-pressed={inspecting}
             title="Inspect element"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="11" cy="11" r="8"/>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m2 22 1-1h3l9-9"/>
+              <path d="M3 21v-3l9-9 3 3-9 9"/>
+              <path d="m15 6 3.4-3.4a2.1 2.1 0 1 1 3 3L18 9l-3-3Z"/>
+              <path d="m2 22 2-2"/>
             </svg>
           </button>
           {!inspecting && hasChanges && (
@@ -230,7 +242,7 @@ export function Panel({ vars, persist, companionUrl, onClose, width = 300 }: Pan
       <div style={styles.accentLine} />
 
       {/* Contenu */}
-      <div style={styles.content}>
+      <div ref={contentRef} onScroll={handleScroll} style={styles.content}>
         {inspecting ? (
           // --- Vue inspect ---
           inspectedVars.length === 0 ? (
@@ -321,16 +333,17 @@ const styles: Record<string, React.CSSProperties> = {
     zIndex: 99998,
     width: 300,
     height: '100vh',
-    background: '#09090b',
-    color: '#e4e4e7',
+    background: '#f5f5f6',
+    color: '#1a1a1a',
     borderRadius: 0,
-    borderRight: '1px solid #1e1e21',
+    borderRight: '1px solid #e4e4e7',
     overflow: 'hidden',
     display: 'flex',
     flexDirection: 'column',
-    fontFamily: "'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif",
+    fontFamily: "'Geist Mono', 'SF Mono', ui-monospace, monospace",
     fontSize: 12,
     WebkitFontSmoothing: 'antialiased',
+    boxShadow: '2px 0 12px rgba(0,0,0,0.06)',
   },
   header: {
     padding: '12px 14px',
@@ -341,7 +354,7 @@ const styles: Record<string, React.CSSProperties> = {
   accentLine: {
     height: 1,
     background: 'linear-gradient(90deg, #6366f1 0%, #8b5cf6 40%, #ec4899 70%, transparent 100%)',
-    opacity: 0.4,
+    opacity: 0.5,
     flexShrink: 0,
   },
   headerLeft: {
@@ -355,25 +368,15 @@ const styles: Record<string, React.CSSProperties> = {
     gap: 2,
   },
   title: {
-    fontWeight: 700,
+    fontWeight: 600,
     fontSize: 13,
     letterSpacing: '-0.3px',
-    color: '#fafafa',
-  },
-  badge: {
-    fontSize: 9,
-    padding: '2px 6px',
-    borderRadius: 4,
-    background: 'rgba(99,102,241,0.1)',
-    color: '#818cf8',
-    fontWeight: 600,
-    letterSpacing: '0.3px',
-    textTransform: 'uppercase' as React.CSSProperties['textTransform'],
+    color: '#18181b',
   },
   headerButton: {
     background: 'none',
     border: 'none',
-    color: '#71717a',
+    color: '#9ca3af',
     cursor: 'pointer',
     padding: 6,
     borderRadius: 6,
@@ -385,16 +388,19 @@ const styles: Record<string, React.CSSProperties> = {
     transition: 'color 100ms ease, background 100ms ease',
   },
   inspectButtonActive: {
-    color: '#818cf8',
-    background: 'rgba(99,102,241,0.1)',
+    color: '#6366f1',
+    background: 'rgba(99,102,241,0.08)',
   },
   content: {
-    padding: '6px 12px',
+    padding: '12px 16px',
     flex: 1,
     overflowY: 'auto',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 20,
   },
   empty: {
-    color: '#71717a',
+    color: '#9ca3af',
     fontSize: 11,
     textAlign: 'center',
     padding: '32px 0',
@@ -413,14 +419,15 @@ const styles: Record<string, React.CSSProperties> = {
     width: 56,
     height: 56,
     borderRadius: 16,
-    background: '#111113',
-    border: '1px solid #1e1e21',
+    background: '#fff',
+    border: '1px solid #e4e4e7',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
   },
   inspectEmptyText: {
-    color: '#71717a',
+    color: '#9ca3af',
     fontSize: 12,
     textAlign: 'center',
     lineHeight: 1.6,
@@ -429,15 +436,16 @@ const styles: Record<string, React.CSSProperties> = {
   exitInspectButton: {
     marginTop: 4,
     padding: '6px 14px',
-    background: '#111113',
-    border: '1px solid #1e1e21',
+    background: '#fff',
+    border: '1px solid #e4e4e7',
     borderRadius: 6,
-    color: '#71717a',
+    color: '#6b7280',
     cursor: 'pointer',
     fontSize: 11,
     fontWeight: 500,
     transition: 'all 150ms ease',
     fontFamily: 'inherit',
+    boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
   },
   // Inspect results
   inspectResults: {
@@ -453,17 +461,16 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '0 2px',
   },
   inspectResultsCount: {
-    color: '#71717a',
+    color: '#9ca3af',
     fontSize: 10,
-    fontWeight: 600,
+    fontWeight: 500,
     letterSpacing: '0.3px',
-    textTransform: 'uppercase' as React.CSSProperties['textTransform'],
   },
   exitInspectSmall: {
-    background: '#111113',
-    border: '1px solid #1e1e21',
+    background: '#fff',
+    border: '1px solid #e4e4e7',
     borderRadius: 4,
-    color: '#71717a',
+    color: '#6b7280',
     cursor: 'pointer',
     fontSize: 10,
     fontWeight: 500,
@@ -472,11 +479,12 @@ const styles: Record<string, React.CSSProperties> = {
     fontFamily: 'inherit',
   },
   inspectVarItem: {
-    background: '#0e0e10',
-    border: '1px solid #1e1e21',
+    background: '#fff',
+    border: '1px solid #e4e4e7',
     borderRadius: 8,
     padding: '10px 12px',
     marginBottom: 6,
+    boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
   },
   inspectVarHeader: {
     display: 'flex',
@@ -484,24 +492,24 @@ const styles: Record<string, React.CSSProperties> = {
     gap: 8,
   },
   inspectSwatch: {
-    width: 24,
-    height: 24,
-    borderRadius: 6,
-    border: '1px solid rgba(255,255,255,0.08)',
+    width: 28,
+    height: 28,
+    borderRadius: '50%',
+    border: '2px solid #fff',
     flexShrink: 0,
-    boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.2)',
+    boxShadow: '0 0 0 1px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.1)',
   },
   inspectVarName: {
     flex: 1,
     fontSize: 12,
     fontWeight: 500,
-    color: '#e4e4e7',
+    color: '#1a1a1a',
     letterSpacing: '-0.1px',
   },
   resetButton: {
     background: 'none',
     border: 'none',
-    color: '#71717a',
+    color: '#9ca3af',
     cursor: 'pointer',
     fontSize: 13,
     padding: '4px 6px',

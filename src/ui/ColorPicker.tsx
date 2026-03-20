@@ -55,7 +55,7 @@ export function ColorPicker({ value, onChange }: ColorPickerProps) {
     setTextInput(formatted)
   }, [onChange, outputFormat])
 
-  // --- Dessiner la zone L×C ---
+  // --- Dessiner la zone L×C (gradient seulement, pas de crosshair) ---
   useEffect(() => {
     const canvas = areaCanvasRef.current
     if (!canvas) return
@@ -78,29 +78,9 @@ export function ColorPicker({ value, onChange }: ColorPickerProps) {
       }
     }
     ctx.putImageData(imgData, 0, 0)
+  }, [hue])
 
-    // Crosshair — refined circle with inner dot
-    const cx = (chroma / MAX_C) * (AREA_W - 1)
-    const cy = (1 - lightness) * (AREA_H - 1)
-    const ringColor = lightness > 0.5 ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.85)'
-    const innerColor = lightness > 0.5 ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.4)'
-
-    // Outer ring
-    ctx.beginPath()
-    ctx.arc(cx, cy, 6, 0, 2 * Math.PI)
-    ctx.strokeStyle = ringColor
-    ctx.lineWidth = 1.5
-    ctx.stroke()
-
-    // White/black inner ring for contrast
-    ctx.beginPath()
-    ctx.arc(cx, cy, 4.5, 0, 2 * Math.PI)
-    ctx.strokeStyle = innerColor
-    ctx.lineWidth = 1
-    ctx.stroke()
-  }, [hue, lightness, chroma])
-
-  // --- Dessiner la barre de hue ---
+  // --- Dessiner la barre de hue (gradient seulement, pas d'indicateur) ---
   useEffect(() => {
     const canvas = hueCanvasRef.current
     if (!canvas) return
@@ -124,49 +104,39 @@ export function ColorPicker({ value, onChange }: ColorPickerProps) {
       }
     }
     ctx.putImageData(imgData, 0, 0)
-
-    // Refined indicator — small triangle/line
-    const hx = (hue / 360) * (AREA_W - 1)
-    ctx.beginPath()
-    ctx.roundRect(hx - 1.5, 0, 3, HUE_H, 1)
-    ctx.fillStyle = '#fff'
-    ctx.fill()
-    ctx.strokeStyle = 'rgba(0,0,0,0.5)'
-    ctx.lineWidth = 0.5
-    ctx.stroke()
-  }, [hue])
+  }, [])
 
   // --- Interactions souris zone L×C ---
-  const pickFromArea = useCallback((e: React.MouseEvent<HTMLCanvasElement> | MouseEvent) => {
+  const pickFromArea = useCallback((e: React.MouseEvent<HTMLCanvasElement | HTMLDivElement> | MouseEvent) => {
     const canvas = areaCanvasRef.current
     if (!canvas) return
     const rect = canvas.getBoundingClientRect()
-    const x = Math.max(0, Math.min(AREA_W - 1, e.clientX - rect.left))
-    const y = Math.max(0, Math.min(AREA_H - 1, e.clientY - rect.top))
-    const newC = (x / (AREA_W - 1)) * MAX_C
-    const newL = 1 - y / (AREA_H - 1)
+    const x = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width))
+    const y = Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height))
+    const newC = x * MAX_C
+    const newL = 1 - y
     setLightness(newL)
     setChroma(newC)
     emitChange(newL, newC, hue)
   }, [hue, emitChange])
 
-  const onAreaDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+  const onAreaDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     draggingArea.current = true
     pickFromArea(e)
   }, [pickFromArea])
 
   // --- Interactions souris barre hue ---
-  const pickFromHue = useCallback((e: React.MouseEvent<HTMLCanvasElement> | MouseEvent) => {
+  const pickFromHue = useCallback((e: React.MouseEvent<HTMLCanvasElement | HTMLDivElement> | MouseEvent) => {
     const canvas = hueCanvasRef.current
     if (!canvas) return
     const rect = canvas.getBoundingClientRect()
-    const x = Math.max(0, Math.min(AREA_W - 1, e.clientX - rect.left))
-    const newH = (x / (AREA_W - 1)) * 360
+    const x = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width))
+    const newH = x * 360
     setHue(newH)
     emitChange(lightness, chroma, newH)
   }, [lightness, chroma, emitChange])
 
-  const onHueDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+  const onHueDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     draggingHue.current = true
     pickFromHue(e)
   }, [pickFromHue])
@@ -225,31 +195,67 @@ export function ColorPicker({ value, onChange }: ColorPickerProps) {
     }
   }, [onChange])
 
+  // Thumb positions as percentages of canvas size
+  const areaThumbX = `${(chroma / MAX_C) * 100}%`
+  const areaThumbY = `${(1 - lightness) * 100}%`
+  const hueThumbX = `${(hue / 360) * 100}%`
+  const thumbColor = oklchToHex(lightness, chroma, hue)
+
   return (
     <div style={styles.container}>
       {/* 2D color area: lightness (Y) × chroma (X) */}
-      <canvas
-        ref={areaCanvasRef}
-        width={AREA_W}
-        height={AREA_H}
-        style={styles.areaCanvas}
+      <div
+        style={styles.areaOuter}
         onMouseDown={onAreaDown}
         role="img"
         aria-label="Color picker: lightness and chroma"
         tabIndex={0}
-      />
+      >
+        <div style={styles.areaInner}>
+          <canvas
+            ref={areaCanvasRef}
+            width={AREA_W}
+            height={AREA_H}
+            style={styles.areaCanvas}
+          />
+          {/* DOM-based thumb — positioned relative to areaInner (= canvas size) */}
+          <div
+            style={{
+              ...styles.areaThumb,
+              left: areaThumbX,
+              top: areaThumbY,
+              backgroundColor: thumbColor,
+            }}
+            aria-hidden="true"
+          />
+        </div>
+      </div>
 
       {/* Hue strip */}
-      <canvas
-        ref={hueCanvasRef}
-        width={AREA_W}
-        height={HUE_H}
-        style={styles.hueCanvas}
+      <div
+        style={styles.hueOuter}
         onMouseDown={onHueDown}
         role="img"
         aria-label="Hue selector"
         tabIndex={0}
-      />
+      >
+        <div style={styles.hueInner}>
+          <canvas
+            ref={hueCanvasRef}
+            width={AREA_W}
+            height={HUE_H}
+            style={styles.hueCanvas}
+          />
+          {/* DOM-based hue thumb */}
+          <div
+            style={{
+              ...styles.hueThumb,
+              left: hueThumbX,
+            }}
+            aria-hidden="true"
+          />
+        </div>
+      </div>
 
       {/* Value input + gamut warning */}
       <div style={styles.previewRow}>
@@ -322,26 +328,62 @@ export function ColorPicker({ value, onChange }: ColorPickerProps) {
 
 const styles: Record<string, React.CSSProperties> = {
   container: {
-    padding: '10px 0 4px',
+    padding: 0,
     display: 'flex',
     flexDirection: 'column',
     gap: 8,
   },
+  areaOuter: {
+    cursor: 'crosshair',
+    // vertical padding for thumb overflow, NO horizontal — container handles alignment
+    padding: '4px 0',
+  },
+  areaInner: {
+    position: 'relative',
+  },
   areaCanvas: {
-    width: AREA_W,
+    width: '100%',
     height: AREA_H,
     borderRadius: 6,
-    cursor: 'crosshair',
     display: 'block',
-    border: '1px solid rgba(255,255,255,0.06)',
+    border: '1px solid rgba(0,0,0,0.08)',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+  },
+  areaThumb: {
+    position: 'absolute',
+    width: 16,
+    height: 16,
+    borderRadius: '50%',
+    border: '2.5px solid #fff',
+    boxShadow: '0 0 0 1px rgba(0,0,0,0.12), 0 1px 4px rgba(0,0,0,0.2)',
+    pointerEvents: 'none',
+    transform: 'translate(-50%, -50%)',
+  },
+  hueOuter: {
+    cursor: 'crosshair',
+    padding: 0,
+  },
+  hueInner: {
+    position: 'relative',
   },
   hueCanvas: {
-    width: AREA_W,
+    width: '100%',
     height: HUE_H,
     borderRadius: 4,
-    cursor: 'crosshair',
     display: 'block',
-    border: '1px solid rgba(255,255,255,0.06)',
+    border: '1px solid rgba(0,0,0,0.08)',
+  },
+  hueThumb: {
+    position: 'absolute',
+    top: '50%',
+    width: 4,
+    height: HUE_H + 4,
+    borderRadius: 2,
+    background: '#fff',
+    border: '1px solid rgba(0,0,0,0.25)',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+    pointerEvents: 'none',
+    transform: 'translate(-50%, -50%)',
   },
   previewRow: {
     display: 'flex',
@@ -351,8 +393,8 @@ const styles: Record<string, React.CSSProperties> = {
   gamutWarning: {
     fontSize: 9,
     fontWeight: 600,
-    color: '#f59e0b',
-    background: 'rgba(245,158,11,0.1)',
+    color: '#d97706',
+    background: 'rgba(217,119,6,0.08)',
     padding: '1px 5px',
     borderRadius: 3,
     letterSpacing: '0.5px',
@@ -371,10 +413,10 @@ const styles: Record<string, React.CSSProperties> = {
   label: {
     width: 12,
     fontSize: 10,
-    color: '#71717a',
+    color: '#9ca3af',
     fontWeight: 600,
     flexShrink: 0,
-    fontFamily: "'SF Mono', 'Fira Code', 'Cascadia Code', monospace",
+    fontFamily: "inherit",
     letterSpacing: '0.3px',
   },
   slider: {
@@ -384,10 +426,10 @@ const styles: Record<string, React.CSSProperties> = {
   sliderValue: {
     width: 38,
     fontSize: 10,
-    color: '#71717a',
+    color: '#9ca3af',
     textAlign: 'right',
     flexShrink: 0,
-    fontFamily: "'SF Mono', 'Fira Code', 'Cascadia Code', monospace",
+    fontFamily: "inherit",
     letterSpacing: '-0.2px',
   },
   textInput: {
@@ -395,13 +437,14 @@ const styles: Record<string, React.CSSProperties> = {
     minWidth: 0,
     padding: '5px 8px',
     fontSize: 11,
-    fontFamily: "'SF Mono', 'Fira Code', 'Cascadia Code', monospace",
-    background: '#0c0c0e',
-    border: '1px solid #27272a',
+    fontFamily: "inherit",
+    background: '#fff',
+    border: '1px solid #e4e4e7',
     borderRadius: 5,
-    color: '#e4e4e7',
+    color: '#1a1a1a',
     outline: 'none',
     letterSpacing: '-0.2px',
     transition: 'border-color 150ms ease',
+    boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
   },
 }

@@ -11,53 +11,56 @@ interface VarGroupProps {
 }
 
 export function VarGroup({ group, modifiedVars, onVarChange, onVarReset }: VarGroupProps) {
-  const [collapsed, setCollapsed] = useState(false)
   const [openPicker, setOpenPicker] = useState<string | null>(null)
 
   return (
     <div style={styles.container}>
       {/* Header */}
-      <button
-        onClick={() => setCollapsed(!collapsed)}
-        style={styles.header}
-        aria-expanded={!collapsed}
-        aria-label={`${group.name}, ${group.vars.length} variables`}
-      >
-        <span style={{
-          ...styles.arrow,
-          transform: collapsed ? 'rotate(-90deg)' : 'rotate(0deg)',
-          transition: 'transform 150ms ease',
-        }}>
-          {'\u25BE'}
-        </span>
+      <div style={styles.header}>
         <span style={styles.groupName}>{group.name}</span>
         <span style={styles.count}>{group.vars.length}</span>
-      </button>
+      </div>
 
       {/* Variables */}
-      {!collapsed && (
-        <div style={styles.varList}>
+      <div style={styles.varList}>
           {group.vars.map(v => {
             const isColor = isColorValue(v.value)
             const isModified = v.name in modifiedVars
             const isPickerOpen = openPicker === v.name
 
             return (
-              <div key={v.name} style={styles.varItem}>
-                <div style={{
-                  ...styles.varRow,
-                  ...(isPickerOpen ? styles.varRowActive : {}),
-                }}>
+              <div key={v.name} style={{
+                ...styles.varItem,
+                ...(isPickerOpen ? styles.varItemActive : {}),
+              }}>
+                <div
+                  style={{
+                    ...styles.varRow,
+                    ...(isPickerOpen ? styles.varRowActive : {}),
+                    ...(isColor ? { cursor: 'pointer' } : {}),
+                  }}
+                  {...(isColor ? {
+                    role: 'button',
+                    tabIndex: 0,
+                    'aria-label': `Edit ${varToLabel(v.name)}`,
+                    'aria-expanded': isPickerOpen,
+                    onClick: () => setOpenPicker(isPickerOpen ? null : v.name),
+                    onKeyDown: (e: React.KeyboardEvent) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        setOpenPicker(isPickerOpen ? null : v.name)
+                      }
+                    },
+                  } : {})}
+                >
                   {/* Swatch ou valeur */}
                   {isColor ? (
-                    <button
-                      onClick={() => setOpenPicker(isPickerOpen ? null : v.name)}
+                    <div
                       style={{
                         ...styles.colorSwatch,
                         backgroundColor: v.value,
                         ...(isPickerOpen ? styles.swatchActive : {}),
                       }}
-                      aria-label={`Edit ${varToLabel(v.name)}`}
                     />
                   ) : (
                     <input
@@ -81,7 +84,8 @@ export function VarGroup({ group, modifiedVars, onVarChange, onVarReset }: VarGr
                   {/* Reset */}
                   {isModified && (
                     <button
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation()
                         onVarReset(v.name)
                         setOpenPicker(null)
                       }}
@@ -106,107 +110,99 @@ export function VarGroup({ group, modifiedVars, onVarChange, onVarReset }: VarGr
             )
           })}
         </div>
-      )}
     </div>
   )
 }
 
 const styles: Record<string, React.CSSProperties> = {
   container: {
-    marginBottom: 2,
+    borderBottom: '1px solid #e8e8ec',
+    paddingBottom: 16,
   },
   header: {
     display: 'flex',
     alignItems: 'center',
-    gap: 6,
-    width: '100%',
-    padding: '7px 4px',
-    background: 'none',
-    border: 'none',
-    color: '#e4e4e7',
-    cursor: 'pointer',
-    fontSize: 11,
-    fontWeight: 600,
-    textAlign: 'left',
-    borderRadius: 4,
-    transition: 'background 100ms ease',
-    letterSpacing: '0.2px',
+    gap: 4,
+    padding: '4px 8px 6px',
+    color: '#a1a1aa',
+    fontSize: 10,
+    fontWeight: 500,
+    letterSpacing: '0.8px',
     textTransform: 'uppercase' as React.CSSProperties['textTransform'],
-  },
-  arrow: {
-    fontSize: 9,
-    color: '#71717a',
-    width: 10,
-    display: 'inline-block',
-    textAlign: 'center',
+    userSelect: 'none',
+    WebkitUserSelect: 'none',
   },
   groupName: {
     flex: 1,
   },
   count: {
     fontSize: 10,
-    color: '#71717a',
+    color: '#c4c4cc',
     fontWeight: 500,
-    fontFamily: "'SF Mono', 'Fira Code', 'Cascadia Code', monospace",
+    fontFamily: "inherit",
   },
   varList: {
-    paddingLeft: 6,
+    paddingLeft: 0,
     display: 'flex',
     flexDirection: 'column',
-    gap: 0,
-    marginBottom: 4,
+    gap: 1,
   },
   varItem: {
     display: 'flex',
     flexDirection: 'column',
+    borderRadius: 8,
+    padding: 8,
+  },
+  varItemActive: {
+    background: '#fff',
+    boxShadow: '0 1px 4px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04)',
+    gap: 8,
   },
   varRow: {
     display: 'flex',
     alignItems: 'center',
-    gap: 8,
-    padding: '4px 6px',
+    gap: 10,
+    padding: 0,
     borderRadius: 5,
-    transition: 'background 100ms ease',
   },
   varRowActive: {
-    background: 'rgba(255,255,255,0.03)',
   },
   colorSwatch: {
-    width: 24,
-    height: 24,
-    borderRadius: 5,
-    border: '1px solid rgba(255,255,255,0.08)',
-    cursor: 'pointer',
+    width: 28,
+    height: 28,
+    borderRadius: '50%',
+    border: '2px solid #fff',
     flexShrink: 0,
     padding: 0,
     transition: 'transform 100ms ease, box-shadow 150ms ease',
-    boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.15)',
+    boxShadow: '0 0 0 1px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.1)',
   },
   swatchActive: {
-    boxShadow: '0 0 0 2px #09090b, 0 0 0 3px rgba(255,255,255,0.2), inset 0 0 0 1px rgba(0,0,0,0.15)',
   },
   varLabel: {
     flex: 1,
     fontSize: 12,
-    color: '#a1a1aa',
+    color: '#52525b',
+    fontWeight: 400,
+    letterSpacing: '0px',
     transition: 'color 100ms ease',
+    userSelect: 'none',
+    WebkitUserSelect: 'none',
   },
   modifiedLabel: {
-    color: '#e4e4e7',
-    fontWeight: 500,
   },
   activeLabel: {
-    color: '#a1a1aa',
+    color: '#6b7280',
   },
   resetButton: {
     background: 'none',
     border: 'none',
-    color: '#71717a',
+    color: '#9ca3af',
     cursor: 'pointer',
-    fontSize: 13,
-    padding: '4px 6px',
-    minWidth: 28,
-    minHeight: 28,
+    fontSize: 16,
+    padding: '2px 4px',
+    minWidth: 24,
+    minHeight: 24,
     flexShrink: 0,
     borderRadius: 4,
     display: 'flex',
@@ -218,18 +214,18 @@ const styles: Record<string, React.CSSProperties> = {
     width: 72,
     padding: '3px 6px',
     fontSize: 11,
-    fontFamily: "'SF Mono', 'Fira Code', 'Cascadia Code', monospace",
-    background: '#0c0c0e',
-    border: '1px solid #1e1e21',
+    fontFamily: "inherit",
+    background: '#fff',
+    border: '1px solid #e4e4e7',
     borderRadius: 4,
-    color: '#e4e4e7',
+    color: '#1a1a1a',
     outline: 'none',
     flexShrink: 0,
     transition: 'border-color 150ms ease',
     letterSpacing: '-0.3px',
+    boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
   },
   pickerWrap: {
-    paddingLeft: 6,
-    paddingBottom: 4,
+    padding: 0,
   },
 }

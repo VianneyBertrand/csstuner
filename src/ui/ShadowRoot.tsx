@@ -8,11 +8,12 @@ interface ShadowRootProps {
 }
 
 const RESET_STYLES = `
+  @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@300;400;500;600;700&display=swap');
   :host {
     all: initial;
-    font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    font-family: 'Geist Mono', 'SF Mono', ui-monospace, monospace;
     font-size: 12px;
-    color: #e4e4e7;
+    color: #1a1a1a;
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -23,55 +24,68 @@ const RESET_STYLES = `
     padding: 0;
   }
   ::-webkit-scrollbar {
-    width: 5px;
+    width: 8px;
   }
   ::-webkit-scrollbar-track {
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: #27272a;
-    border-radius: 3px;
+    background: rgba(0,0,0,0);
+    border-radius: 10px;
+    border: 2px solid transparent;
+    background-clip: content-box;
   }
-  ::-webkit-scrollbar-thumb:hover {
-    background: #3f3f46;
+  .scrolling::-webkit-scrollbar-thumb {
+    background: rgba(0,0,0,0.15);
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+  .scrolling::-webkit-scrollbar-thumb:hover {
+    background: rgba(0,0,0,0.25);
+    border: 2px solid transparent;
+    background-clip: content-box;
   }
   input[type="range"] {
     -webkit-appearance: none;
     appearance: none;
     background: transparent;
     cursor: pointer;
-    height: 14px;
+    height: 16px;
   }
   input[type="range"]::-webkit-slider-runnable-track {
-    height: 3px;
-    background: #27272a;
+    height: 4px;
+    background: #e4e4e7;
     border-radius: 2px;
   }
   input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
-    width: 14px;
-    height: 14px;
+    width: 16px;
+    height: 16px;
     border-radius: 50%;
-    background: #e4e4e7;
-    border: 2px solid #09090b;
-    margin-top: -5.5px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.4);
-    transition: transform 100ms ease;
+    background: #fff;
+    border: 1.5px solid #d4d4d8;
+    margin-top: -6px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+    transition: transform 100ms ease, box-shadow 150ms ease, border-color 150ms ease;
   }
   input[type="range"]::-webkit-slider-thumb:hover {
-    transform: scale(1.15);
+    transform: scale(1.1);
+    border-color: #a1a1aa;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.12);
   }
   input[type="range"]::-webkit-slider-thumb:active {
     transform: scale(0.95);
-    background: #fff;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.15), 0 1px 3px rgba(0,0,0,0.1);
   }
   /* Focus indicators */
   button:focus-visible, input:focus-visible, canvas:focus-visible {
-    outline: 2px solid #818cf8;
+    outline: 2px solid #6366f1;
     outline-offset: 2px;
   }
   input[type="range"]:focus-visible::-webkit-slider-thumb {
-    box-shadow: 0 0 0 3px rgba(129,140,248,0.4), 0 1px 3px rgba(0,0,0,0.4);
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.2), 0 1px 3px rgba(0,0,0,0.1);
   }
   /* High contrast mode support */
   @media (forced-colors: active) {

@@ -23,27 +23,11 @@ const RESET_STYLES = `
     margin: 0;
     padding: 0;
   }
+  * {
+    scrollbar-width: none;
+  }
   ::-webkit-scrollbar {
-    width: 8px;
-  }
-  ::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  ::-webkit-scrollbar-thumb {
-    background: rgba(0,0,0,0);
-    border-radius: 10px;
-    border: 2px solid transparent;
-    background-clip: content-box;
-  }
-  .scrolling::-webkit-scrollbar-thumb {
-    background: rgba(0,0,0,0.15);
-    border: 2px solid transparent;
-    background-clip: content-box;
-  }
-  .scrolling::-webkit-scrollbar-thumb:hover {
-    background: rgba(0,0,0,0.25);
-    border: 2px solid transparent;
-    background-clip: content-box;
+    display: none;
   }
   input[type="range"] {
     -webkit-appearance: none;

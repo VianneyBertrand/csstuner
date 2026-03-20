@@ -35,8 +35,24 @@ src/
 
 - Styles inlines via objets `Record<string, React.CSSProperties>` en bas de chaque composant UI
 - Le color picker utilise des thumbs DOM (pas dessinés sur le canvas) pour éviter le clipping
-- Le panneau est un sidebar fixe à gauche, pleine hauteur
-- Les noms de groupes viennent de `core/grouper.ts` (sentence case, pas d'uppercase CSS)
+- Le panneau est un sidebar fixe à gauche, pleine hauteur, thème light neutre (#f5f5f6)
+- Les noms de groupes viennent de `core/grouper.ts` (uppercase via CSS, noms en sentence case)
+- Font : Geist Mono (chargée via Google Fonts dans le Shadow DOM)
+
+## UI Patterns
+
+### Scrollbar custom overlay
+La scrollbar native est masquée (`scrollbar-width: none` + `::-webkit-scrollbar { display: none }`). Un div positionné en absolu (`scrollThumb` dans Panel.tsx) simule un thumb de scrollbar :
+- Position et hauteur calculées depuis `scrollTop` / `scrollHeight` / `clientHeight`
+- Visible uniquement pendant le scroll (state `scrollVisible`, timeout 800ms)
+- Ne réserve aucun espace — se superpose au contenu (z-index + pointer-events: none)
+- 4px de large, arrondi, `rgba(0,0,0,0.15)`
+
+### Color picker thumbs
+Les thumbs (zone LC et hue) sont des divs positionnés en absolu par-dessus le canvas, pas dessinés sur le canvas. Pattern : `areaOuter` (padding vertical pour le débordement) > `areaInner` (position: relative) > canvas + thumb. Le thumb peut déborder du canvas dans le padding de `areaOuter`.
+
+### Conteneur actif (swatch + picker)
+Quand un swatch est sélectionné, le `varItem` prend un fond blanc qui s'étend bord à bord du panel. Le padding horizontal est sur chaque `varItem` individuellement (pas sur le parent), ce qui évite les margin négatifs pour le full-bleed.
 
 ## Spec complète
 

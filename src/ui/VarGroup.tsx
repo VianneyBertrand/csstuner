@@ -18,7 +18,6 @@ export function VarGroup({ group, modifiedVars, onVarChange, onVarReset }: VarGr
       {/* Header */}
       <div style={styles.header}>
         <span style={styles.groupName}>{group.name}</span>
-        <span style={styles.count}>{group.vars.length}</span>
       </div>
 
       {/* Variables */}
@@ -92,7 +91,10 @@ export function VarGroup({ group, modifiedVars, onVarChange, onVarReset }: VarGr
                       style={styles.resetButton}
                       aria-label={`Reset ${varToLabel(v.name)}`}
                     >
-                      {'\u21ba'}
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                        <path d="M3 3v5h5"/>
+                      </svg>
                     </button>
                   )}
                 </div>
@@ -123,7 +125,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     gap: 4,
-    padding: '4px 8px 6px',
+    padding: '4px 10px 6px',
     color: '#a1a1aa',
     fontSize: 10,
     fontWeight: 500,
@@ -151,12 +153,12 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     flexDirection: 'column',
     borderRadius: 8,
-    padding: 8,
+    padding: '8px 16px',
   },
   varItemActive: {
     background: '#fff',
-    boxShadow: '0 1px 4px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04)',
     gap: 8,
+    borderRadius: 12,
   },
   varRow: {
     display: 'flex',
@@ -199,16 +201,16 @@ const styles: Record<string, React.CSSProperties> = {
     border: 'none',
     color: '#9ca3af',
     cursor: 'pointer',
-    fontSize: 16,
-    padding: '2px 4px',
-    minWidth: 24,
-    minHeight: 24,
+    padding: 6,
+    marginRight: -6,
+    minWidth: 28,
+    minHeight: 28,
     flexShrink: 0,
     borderRadius: 4,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    transition: 'color 100ms ease, background 100ms ease',
+    transition: 'color 100ms ease',
   },
   valueInput: {
     width: 72,

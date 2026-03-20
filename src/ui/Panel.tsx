@@ -183,18 +183,35 @@ export function Panel({ vars, persist, companionUrl, onClose, width = 300 }: Pan
     .map(name => allVars.find(v => v.name === name))
     .filter((v): v is CssVariable => v !== undefined)
 
-  // Scrollbar: visible only while scrolling
+  // Custom overlay scrollbar
   const contentRef = useRef<HTMLDivElement>(null)
+  const thumbRef = useRef<HTMLDivElement>(null)
   const scrollTimer = useRef<ReturnType<typeof setTimeout>>(null)
-  const handleScroll = useCallback(() => {
+  const [scrollVisible, setScrollVisible] = useState(false)
+
+  const updateScrollThumb = useCallback(() => {
     const el = contentRef.current
-    if (!el) return
-    el.classList.add('scrolling')
+    const thumb = thumbRef.current
+    if (!el || !thumb) return
+    const { scrollTop, scrollHeight, clientHeight } = el
+    if (scrollHeight <= clientHeight) {
+      thumb.style.opacity = '0'
+      return
+    }
+    const thumbH = Math.max(24, (clientHeight / scrollHeight) * clientHeight)
+    const thumbY = (scrollTop / (scrollHeight - clientHeight)) * (clientHeight - thumbH)
+    thumb.style.height = `${thumbH}px`
+    thumb.style.transform = `translateY(${thumbY}px)`
+  }, [])
+
+  const handleScroll = useCallback(() => {
+    setScrollVisible(true)
+    updateScrollThumb()
     if (scrollTimer.current) clearTimeout(scrollTimer.current)
     scrollTimer.current = setTimeout(() => {
-      el.classList.remove('scrolling')
+      setScrollVisible(false)
     }, 800)
-  }, [])
+  }, [updateScrollThumb])
 
   return (
     <div style={styles.panel} role="region" aria-label="CSS Variable Tuner">
@@ -204,6 +221,14 @@ export function Panel({ vars, persist, companionUrl, onClose, width = 300 }: Pan
           <span style={styles.title}>CssTuner</span>
         </div>
         <div style={styles.headerRight}>
+          {!inspecting && hasChanges && (
+            <button onClick={resetAll} style={styles.headerButton} aria-label="Reset all" title="Reset all">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                <path d="M3 3v5h5"/>
+              </svg>
+            </button>
+          )}
           <button
             onClick={toggleInspect}
             style={{
@@ -221,14 +246,6 @@ export function Panel({ vars, persist, companionUrl, onClose, width = 300 }: Pan
               <path d="m2 22 2-2"/>
             </svg>
           </button>
-          {!inspecting && hasChanges && (
-            <button onClick={resetAll} style={styles.headerButton} aria-label="Reset all" title="Reset all">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
-                <path d="M3 3v5h5"/>
-              </svg>
-            </button>
-          )}
           <button onClick={onClose} style={styles.headerButton} aria-label="Close panel" title="Close panel">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="18" y1="6" x2="6" y2="18"/>
@@ -242,8 +259,9 @@ export function Panel({ vars, persist, companionUrl, onClose, width = 300 }: Pan
       <div style={styles.accentLine} />
 
       {/* Contenu */}
-      <div ref={contentRef} onScroll={handleScroll} style={styles.content}>
-        {inspecting ? (
+      <div style={styles.contentWrap}>
+        <div ref={contentRef} onScroll={handleScroll} style={styles.content}>
+          {inspecting ? (
           // --- Vue inspect ---
           inspectedVars.length === 0 ? (
             <div style={styles.inspectEmpty}>
@@ -316,7 +334,17 @@ export function Panel({ vars, persist, companionUrl, onClose, width = 300 }: Pan
               />
             ))
           )
-        )}
+          )}
+        </div>
+        {/* Custom overlay scrollbar */}
+        <div
+          ref={thumbRef}
+          style={{
+            ...styles.scrollThumb,
+            opacity: scrollVisible ? 1 : 0,
+          }}
+          aria-hidden="true"
+        />
       </div>
 
       {/* Footer */}
@@ -346,7 +374,7 @@ const styles: Record<string, React.CSSProperties> = {
     boxShadow: '2px 0 12px rgba(0,0,0,0.06)',
   },
   header: {
-    padding: '12px 14px',
+    padding: '12px 16px',
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -366,6 +394,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     gap: 2,
+    marginRight: -6,
   },
   title: {
     fontWeight: 600,
@@ -391,13 +420,29 @@ const styles: Record<string, React.CSSProperties> = {
     color: '#6366f1',
     background: 'rgba(99,102,241,0.08)',
   },
-  content: {
-    padding: '12px 16px',
+  contentWrap: {
     flex: 1,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  content: {
+    padding: '12px 0',
+    height: '100%',
     overflowY: 'auto',
     display: 'flex',
     flexDirection: 'column',
     gap: 20,
+  },
+  scrollThumb: {
+    position: 'absolute',
+    top: 0,
+    right: 1,
+    width: 4,
+    borderRadius: 4,
+    background: 'rgba(0,0,0,0.15)',
+    pointerEvents: 'none',
+    transition: 'opacity 300ms ease',
+    zIndex: 10,
   },
   empty: {
     color: '#9ca3af',

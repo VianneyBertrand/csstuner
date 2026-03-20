@@ -69,11 +69,12 @@ export function ColorPicker({ value, onChange }: ColorPickerProps) {
       for (let x = 0; x < AREA_W; x++) {
         const c = (x / (AREA_W - 1)) * MAX_C
         const color = { mode: 'oklch' as const, l, c, h: hue }
-        const rgb = toSrgb(clampToSrgb(color) as unknown as Color) as { r?: number; g?: number; b?: number } | undefined
+        // Clip RGB directly instead of clamping chroma — preserves visual vibrancy
+        const rgb = toSrgb(color as unknown as Color) as { r?: number; g?: number; b?: number } | undefined
         const idx = (y * AREA_W + x) * 4
-        data[idx] = Math.round((rgb?.r ?? 0) * 255)
-        data[idx + 1] = Math.round((rgb?.g ?? 0) * 255)
-        data[idx + 2] = Math.round((rgb?.b ?? 0) * 255)
+        data[idx] = Math.round(Math.min(1, Math.max(0, rgb?.r ?? 0)) * 255)
+        data[idx + 1] = Math.round(Math.min(1, Math.max(0, rgb?.g ?? 0)) * 255)
+        data[idx + 2] = Math.round(Math.min(1, Math.max(0, rgb?.b ?? 0)) * 255)
         data[idx + 3] = 255
       }
     }
@@ -328,7 +329,7 @@ export function ColorPicker({ value, onChange }: ColorPickerProps) {
 
 const styles: Record<string, React.CSSProperties> = {
   container: {
-    padding: 0,
+    padding: '0 0 6px',
     display: 'flex',
     flexDirection: 'column',
     gap: 8,

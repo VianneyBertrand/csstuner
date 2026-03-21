@@ -218,17 +218,18 @@ export function Panel({ vars, persist, companionUrl, onClose, width = 300 }: Pan
       {/* Header */}
       <div style={styles.header}>
         <div style={styles.headerLeft}>
-          <span style={styles.title}>CssTuner</span>
+          <pre style={styles.asciiLogo} aria-label="CssTuner">
+            <span style={{ color: '#18181b' }}>{'█▀▀ █▀▀ █▀▀'}</span>
+            <span style={{ color: '#6366f1' }}>{' ▀█▀ █ █ █▀█ █▀▀ █▀▄'}</span>
+            {'\n'}
+            <span style={{ color: '#18181b' }}>{'█   ▀▀█ ▀▀█'}</span>
+            <span style={{ color: '#6366f1' }}>{' \u00A0█\u00A0 █ █ █ █ █▀▀ █▀▄'}</span>
+            {'\n'}
+            <span style={{ color: '#18181b' }}>{'▀▀▀ ▀▀▀ ▀▀▀'}</span>
+            <span style={{ color: '#6366f1' }}>{' \u00A0▀\u00A0 ▀▀▀ ▀ ▀ ▀▀▀ ▀ ▀'}</span>
+          </pre>
         </div>
         <div style={styles.headerRight}>
-          {!inspecting && hasChanges && (
-            <button onClick={resetAll} style={styles.headerButton} aria-label="Reset all" title="Reset all">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
-                <path d="M3 3v5h5"/>
-              </svg>
-            </button>
-          )}
           <button
             onClick={toggleInspect}
             style={{
@@ -255,8 +256,7 @@ export function Panel({ vars, persist, companionUrl, onClose, width = 300 }: Pan
         </div>
       </div>
 
-      {/* Accent line */}
-      <div style={styles.accentLine} />
+{/* accent line removed */}
 
       {/* Contenu */}
       <div style={styles.contentWrap}>
@@ -351,7 +351,7 @@ export function Panel({ vars, persist, companionUrl, onClose, width = 300 }: Pan
       </div>
 
       {/* Footer */}
-      <SaveButton modifiedVars={modifiedVars} companionUrl={companionUrl} />
+      <SaveButton modifiedVars={modifiedVars} companionUrl={companionUrl} onReset={resetAll} />
     </div>
   )
 }
@@ -367,7 +367,7 @@ const styles: Record<string, React.CSSProperties> = {
     background: '#f5f5f6',
     color: '#1a1a1a',
     borderRadius: 0,
-    borderRight: '1px solid #e4e4e7',
+    borderRight: '1px solid #d4d4d8',
     overflow: 'hidden',
     display: 'flex',
     flexDirection: 'column',
@@ -383,9 +383,9 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
   },
   accentLine: {
-    height: 1,
-    background: 'linear-gradient(90deg, #6366f1 0%, #8b5cf6 40%, #ec4899 70%, transparent 100%)',
-    opacity: 0.5,
+    height: 0,
+    borderBottom: '1.5px dashed #d4d4d8',
+    margin: '0 16px',
     flexShrink: 0,
   },
   headerLeft: {
@@ -405,6 +405,16 @@ const styles: Record<string, React.CSSProperties> = {
     letterSpacing: '-0.3px',
     color: '#18181b',
   },
+  asciiLogo: {
+    margin: 0,
+    padding: 0,
+    fontSize: '5px',
+    lineHeight: 1.15,
+    fontFamily: "'Geist Mono', 'SF Mono', ui-monospace, monospace",
+    color: '#18181b',
+    userSelect: 'none',
+    WebkitUserSelect: 'none',
+  } as React.CSSProperties,
   headerButton: {
     background: 'none',
     border: 'none',
@@ -434,7 +444,7 @@ const styles: Record<string, React.CSSProperties> = {
     overflowY: 'auto',
     display: 'flex',
     flexDirection: 'column',
-    gap: 20,
+    gap: 16,
   },
   scrollThumb: {
     position: 'absolute',
@@ -468,7 +478,7 @@ const styles: Record<string, React.CSSProperties> = {
     height: 56,
     borderRadius: 16,
     background: '#fff',
-    border: '1px solid #e4e4e7',
+    border: '1px solid #d4d4d8',
     boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
     display: 'flex',
     alignItems: 'center',
@@ -485,7 +495,7 @@ const styles: Record<string, React.CSSProperties> = {
     marginTop: 4,
     padding: '6px 14px',
     background: '#fff',
-    border: '1px solid #e4e4e7',
+    border: '1px solid #d4d4d8',
     borderRadius: 6,
     color: '#6b7280',
     cursor: 'pointer',
@@ -516,7 +526,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   exitInspectSmall: {
     background: '#fff',
-    border: '1px solid #e4e4e7',
+    border: '1px solid #d4d4d8',
     borderRadius: 4,
     color: '#6b7280',
     cursor: 'pointer',

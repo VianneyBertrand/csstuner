@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { isColorValue, varToLabel } from '../core/cssVarReader'
+import { parseColor } from '../core/colorConverter'
 import { ColorPicker } from './ColorPicker'
 import type { VarGroup as VarGroupType } from '../core/types'
 
@@ -55,6 +56,7 @@ export function VarGroup({ group, modifiedVars, onVarChange, onVarReset }: VarGr
                       ...styles.colorSwatch,
                       backgroundColor: v.value,
                       ...(isPickerOpen ? styles.swatchActive : {}),
+                      ...((parseColor(v.value)?.l ?? 0) > 0.85 ? { border: '1px solid #d4d4d8' } : {}),
                     }}
                   />
 
@@ -99,27 +101,31 @@ export function VarGroup({ group, modifiedVars, onVarChange, onVarReset }: VarGr
             )
           })}
         </div>
+      <div style={styles.separator} aria-hidden="true" />
     </div>
   )
 }
 
 const styles: Record<string, React.CSSProperties> = {
   container: {
-    borderBottom: '1px solid #e8e8ec',
-    paddingBottom: 16,
   },
   header: {
     display: 'flex',
     alignItems: 'center',
     gap: 4,
-    padding: '4px 10px 6px',
-    color: '#a1a1aa',
+    padding: '4px 16px 6px',
+    color: '#52525b',
     fontSize: 10,
-    fontWeight: 500,
-    letterSpacing: '0.8px',
+    fontWeight: 700,
+    letterSpacing: '1.5px',
     textTransform: 'uppercase' as React.CSSProperties['textTransform'],
     userSelect: 'none',
     WebkitUserSelect: 'none',
+  },
+  groupPrefix: {
+    color: '#6366f1',
+    fontSize: 12,
+    lineHeight: 1,
   },
   groupName: {
     flex: 1,
@@ -145,7 +151,12 @@ const styles: Record<string, React.CSSProperties> = {
   varItemActive: {
     background: '#fff',
     gap: 8,
-    borderRadius: 12,
+    borderRadius: 0,
+    borderTop: '1px solid #d4d4d8',
+    borderBottom: '1px solid #d4d4d8',
+    borderLeft: '1px solid #d4d4d8',
+    borderRight: 'none',
+    marginRight: -1,
   },
   varRow: {
     display: 'flex',
@@ -159,12 +170,12 @@ const styles: Record<string, React.CSSProperties> = {
   colorSwatch: {
     width: 28,
     height: 28,
-    borderRadius: '50%',
-    border: '2px solid #fff',
+    borderRadius: 3,
+    border: 'none',
     flexShrink: 0,
     padding: 0,
     transition: 'transform 100ms ease, box-shadow 150ms ease',
-    boxShadow: '0 0 0 1px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.1)',
+    boxShadow: 'none',
   },
   swatchActive: {
   },
@@ -205,7 +216,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 11,
     fontFamily: "inherit",
     background: '#fff',
-    border: '1px solid #e4e4e7',
+    border: '1px solid #d4d4d8',
     borderRadius: 4,
     color: '#1a1a1a',
     outline: 'none',
@@ -216,5 +227,10 @@ const styles: Record<string, React.CSSProperties> = {
   },
   pickerWrap: {
     padding: 0,
+  },
+  separator: {
+    margin: '8px 0 0',
+    height: 0,
+    borderBottom: '1px solid #d4d4d8',
   },
 }

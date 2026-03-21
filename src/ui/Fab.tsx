@@ -1,10 +1,9 @@
 interface FabProps {
   position: 'bottom-left' | 'bottom-right'
   onClick: () => void
-  open: boolean
 }
 
-export function Fab({ position, onClick, open }: FabProps) {
+export function Fab({ position, onClick }: FabProps) {
   const style: React.CSSProperties = {
     position: 'fixed',
     bottom: 20,
@@ -14,19 +13,14 @@ export function Fab({ position, onClick, open }: FabProps) {
     height: 40,
     borderRadius: 11,
     border: '1px solid rgba(0,0,0,0.08)',
-    background: open
-      ? '#e8e8ec'
-      : '#fff',
-    color: open ? '#9ca3af' : '#1a1a1a',
+    background: '#fff',
+    color: '#1a1a1a',
     cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    boxShadow: open
-      ? '0 2px 8px rgba(0,0,0,0.1)'
-      : '0 4px 16px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.06)',
-    transition: 'transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 200ms ease, background 200ms ease',
-    transform: open ? 'rotate(45deg) scale(0.95)' : 'none',
+    boxShadow: '0 4px 16px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.06)',
+    transition: 'transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 200ms ease',
     fontSize: 15,
     letterSpacing: 0,
     fontFamily: 'system-ui, -apple-system, sans-serif',
@@ -37,7 +31,7 @@ export function Fab({ position, onClick, open }: FabProps) {
     <button
       onClick={onClick}
       style={style}
-      aria-label={open ? 'Close CssTuner' : 'Open CssTuner'}
+      aria-label="Open CssTuner"
       title="CssTuner"
     >
       {'\u2726'}

@@ -42,7 +42,7 @@ export function CssTuner({
 
   return (
     <ShadowContainer open={open} panelWidth={PANEL_WIDTH}>
-      <Fab position={position} onClick={() => setOpen(!open)} open={open} />
+      {!open && <Fab position={position} onClick={() => setOpen(true)} open={false} />}
       {open && (
         <Panel
           vars={vars}

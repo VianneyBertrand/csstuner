@@ -8,9 +8,10 @@ type SaveStatus = 'idle' | 'saving' | 'saved' | 'error' | 'no-companion'
 interface SaveButtonProps {
   modifiedVars: Record<string, string>
   companionUrl?: string
+  onReset?: () => void
 }
 
-export function SaveButton({ modifiedVars, companionUrl }: SaveButtonProps) {
+export function SaveButton({ modifiedVars, companionUrl, onReset }: SaveButtonProps) {
   const [status, setStatus] = useState<SaveStatus>('idle')
   const [copied, setCopied] = useState(false)
 
@@ -50,6 +51,35 @@ export function SaveButton({ modifiedVars, companionUrl }: SaveButtonProps) {
 
   return (
     <div style={styles.container} role="status" aria-live="polite">
+      {/* Reset */}
+      {hasChanges && onReset && (
+        <button
+          onClick={onReset}
+          style={styles.resetButton}
+          aria-label="Reset all"
+          title="Reset all"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+            <path d="M3 3v5h5"/>
+          </svg>
+        </button>
+      )}
+
+      {/* Copy CSS */}
+      <button
+        onClick={handleCopy}
+        disabled={!hasChanges}
+        style={{
+          ...styles.button,
+          ...styles.copyButton,
+          ...(!hasChanges ? styles.disabled : {}),
+          ...(copied ? styles.copiedButton : {}),
+        }}
+      >
+        {copied ? '\u2713 Copied' : 'Copy CSS'}
+      </button>
+
       {/* Save */}
       <button
         onClick={handleSave}
@@ -67,20 +97,6 @@ export function SaveButton({ modifiedVars, companionUrl }: SaveButtonProps) {
          status === 'no-companion' ? 'npx csstuner' :
          'Save'}
       </button>
-
-      {/* Copy CSS */}
-      <button
-        onClick={handleCopy}
-        disabled={!hasChanges}
-        style={{
-          ...styles.button,
-          ...styles.copyButton,
-          ...(!hasChanges ? styles.disabled : {}),
-          ...(copied ? styles.copiedButton : {}),
-        }}
-      >
-        {copied ? '\u2713 Copied' : 'Copy CSS'}
-      </button>
     </div>
   )
 }
@@ -96,7 +112,7 @@ const styles: Record<string, React.CSSProperties> = {
   button: {
     flex: 1,
     padding: '7px 12px',
-    borderRadius: 7,
+    borderRadius: 3,
     border: 'none',
     fontSize: 11,
     fontWeight: 600,
@@ -106,9 +122,9 @@ const styles: Record<string, React.CSSProperties> = {
     fontFamily: "inherit",
   },
   saveButton: {
-    background: '#1a1a1a',
+    background: 'linear-gradient(135deg, #6366f1 0%, #7c5ce7 100%)',
     color: '#fff',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.08)',
+    boxShadow: '0 1px 3px rgba(99,102,241,0.25)',
   },
   savedButton: {
     background: '#22c55e',
@@ -129,5 +145,18 @@ const styles: Record<string, React.CSSProperties> = {
     opacity: 0.35,
     cursor: 'default',
     pointerEvents: 'none' as React.CSSProperties['pointerEvents'],
+  },
+  resetButton: {
+    background: 'none',
+    border: '1px solid #d4d4d8',
+    color: '#9ca3af',
+    cursor: 'pointer',
+    padding: '6px 8px',
+    borderRadius: 3,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'color 100ms ease',
+    flexShrink: 0,
   },
 }

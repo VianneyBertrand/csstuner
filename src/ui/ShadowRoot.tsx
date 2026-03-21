@@ -37,9 +37,8 @@ const RESET_STYLES = `
     height: 16px;
   }
   input[type="range"]::-webkit-slider-runnable-track {
-    height: 4px;
-    background: #e4e4e7;
-    border-radius: 2px;
+    height: 0;
+    background: transparent;
   }
   input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
@@ -48,7 +47,7 @@ const RESET_STYLES = `
     border-radius: 50%;
     background: #fff;
     border: 1.5px solid #d4d4d8;
-    margin-top: -6px;
+    margin-top: -8px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
     transition: transform 100ms ease, box-shadow 150ms ease, border-color 150ms ease;
   }

@@ -275,53 +275,36 @@ export function ColorPicker({ value, onChange }: ColorPickerProps) {
 
       {/* Sliders */}
       <div style={styles.slidersContainer}>
-        <div style={styles.sliderRow}>
-          <label style={styles.label}>L</label>
-          <input
-            type="range"
-            min="0"
-            max="1"
-            step="0.005"
-            value={lightness}
-            onChange={handleLightness}
-            style={styles.slider}
-            aria-label="Lightness"
-            aria-valuetext={`${(lightness * 100).toFixed(0)}%`}
-          />
-          <span style={styles.sliderValue} aria-hidden="true">{(lightness * 100).toFixed(0)}%</span>
-        </div>
-
-        <div style={styles.sliderRow}>
-          <label style={styles.label}>C</label>
-          <input
-            type="range"
-            min="0"
-            max="0.4"
-            step="0.002"
-            value={chroma}
-            onChange={handleChroma}
-            style={styles.slider}
-            aria-label="Chroma"
-            aria-valuetext={chroma.toFixed(3)}
-          />
-          <span style={styles.sliderValue} aria-hidden="true">{chroma.toFixed(3)}</span>
-        </div>
-
-        <div style={styles.sliderRow}>
-          <label style={styles.label}>H</label>
-          <input
-            type="range"
-            min="0"
-            max="360"
-            step="1"
-            value={hue}
-            onChange={handleHue}
-            style={styles.slider}
-            aria-label="Hue"
-            aria-valuetext={`${hue.toFixed(0)} degrees`}
-          />
-          <span style={styles.sliderValue} aria-hidden="true">{hue.toFixed(0)}°</span>
-        </div>
+        {([
+          { label: 'L', value: lightness, min: 0, max: 1, step: 0.005, onChange: handleLightness, display: `${(lightness * 100).toFixed(0)}%` },
+          { label: 'C', value: chroma, min: 0, max: 0.4, step: 0.002, onChange: handleChroma, display: chroma.toFixed(3) },
+          { label: 'H', value: hue, min: 0, max: 360, step: 1, onChange: handleHue, display: `${hue.toFixed(0)}°` },
+        ] as const).map(s => {
+          const pct = ((Number(s.value) - s.min) / (s.max - s.min)) * 100
+          return (
+            <div key={s.label} style={styles.sliderRow}>
+              <label style={styles.label}>{s.label}</label>
+              <div style={styles.sliderWrap}>
+                <div style={{
+                  ...styles.sliderTrack,
+                  background: `linear-gradient(to right, #c4c4cc ${pct}%, #e4e4e7 ${pct}%)`,
+                }} />
+                <input
+                  type="range"
+                  min={s.min}
+                  max={s.max}
+                  step={s.step}
+                  value={s.value}
+                  onChange={s.onChange}
+                  style={styles.slider}
+                  aria-label={s.label}
+                  aria-valuetext={s.display}
+                />
+              </div>
+              <span style={styles.sliderValue} aria-hidden="true">{s.display}</span>
+            </div>
+          )
+        })}
       </div>
     </div>
   )
@@ -345,10 +328,9 @@ const styles: Record<string, React.CSSProperties> = {
   areaCanvas: {
     width: '100%',
     height: AREA_H,
-    borderRadius: 6,
+    borderRadius: 0,
     display: 'block',
     border: '1px solid rgba(0,0,0,0.08)',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
   },
   areaThumb: {
     position: 'absolute',
@@ -404,7 +386,7 @@ const styles: Record<string, React.CSSProperties> = {
   slidersContainer: {
     display: 'flex',
     flexDirection: 'column',
-    gap: 2,
+    gap: 6,
   },
   sliderRow: {
     display: 'flex',
@@ -420,10 +402,27 @@ const styles: Record<string, React.CSSProperties> = {
     fontFamily: "inherit",
     letterSpacing: '0.3px',
   },
-  slider: {
+  sliderWrap: {
     flex: 1,
-    height: 14,
-  },
+    position: 'relative',
+    height: 16,
+    display: 'flex',
+    alignItems: 'center',
+  } as React.CSSProperties,
+  sliderTrack: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    height: 6,
+    borderRadius: 0,
+    pointerEvents: 'none',
+  } as React.CSSProperties,
+  slider: {
+    position: 'relative',
+    width: '100%',
+    height: 16,
+    background: 'transparent',
+  } as React.CSSProperties,
   sliderValue: {
     width: 38,
     fontSize: 10,

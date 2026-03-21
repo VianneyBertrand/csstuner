@@ -73,18 +73,21 @@ function findReferencedVars(
   return found
 }
 
+// Proprietes CSS heritables qui justifient de remonter les parents
+const INHERITABLE_PROPS = /\b(color|font|letter-spacing|line-height|text|word-spacing|visibility|cursor|direction|white-space)\b/
+
 /**
- * Trouve les CSS variables utilisees par un element et ses enfants.
- * Approche fiable : remonte les stylesheets pour trouver les var() references.
+ * Trouve les CSS variables utilisees par un element, ses enfants, et ses ancetres
+ * (pour les proprietes heritables comme color, font, etc.)
  */
 function findMatchingVars(
   element: HTMLElement,
   trackedVarNames: string[],
 ): string[] {
   const tracked = new Set(trackedVarNames)
-
   const matches = findReferencedVars(element, tracked)
 
+  // Descendre : scanner les enfants
   if (element.children.length > 0) {
     const children = element.querySelectorAll('*')
     children.forEach(child => {
@@ -96,7 +99,76 @@ function findMatchingVars(
     })
   }
 
+  // Remonter : scanner les ancetres pour les proprietes heritables
+  let parent = element.parentElement
+  while (parent) {
+    const parentVars = findReferencedVarsFiltered(parent, tracked, INHERITABLE_PROPS)
+    for (const varName of parentVars) {
+      if (!matches.includes(varName)) {
+        matches.push(varName)
+      }
+    }
+    parent = parent.parentElement
+  }
+
   return matches
+}
+
+/**
+ * Comme findReferencedVars mais filtre pour ne garder que les variables
+ * utilisees dans des proprietes matchant le pattern donne.
+ */
+function findReferencedVarsFiltered(
+  element: HTMLElement,
+  trackedVarNames: Set<string>,
+  propFilter: RegExp,
+): string[] {
+  const found: string[] = []
+  const varRegex = /var\(\s*(--[\w-]+)/g
+
+  for (const sheet of Array.from(document.styleSheets)) {
+    try {
+      walkRulesFiltered(sheet.cssRules, element, trackedVarNames, propFilter, varRegex, found)
+    } catch {
+      // Cross-origin
+    }
+  }
+
+  return found
+}
+
+function walkRulesFiltered(
+  rules: CSSRuleList,
+  element: HTMLElement,
+  trackedVarNames: Set<string>,
+  propFilter: RegExp,
+  varRegex: RegExp,
+  found: string[],
+) {
+  for (const rule of Array.from(rules)) {
+    if (rule instanceof CSSStyleRule) {
+      try {
+        if (!element.matches(rule.selectorText)) continue
+      } catch {
+        continue
+      }
+      // Scanner chaque propriete individuellement
+      for (const prop of Array.from(rule.style)) {
+        if (!propFilter.test(prop)) continue
+        const value = rule.style.getPropertyValue(prop)
+        varRegex.lastIndex = 0
+        let match: RegExpExecArray | null
+        while ((match = varRegex.exec(value)) !== null) {
+          const varName = match[1]
+          if (trackedVarNames.has(varName) && !found.includes(varName)) {
+            found.push(varName)
+          }
+        }
+      }
+    } else if ('cssRules' in rule) {
+      walkRulesFiltered((rule as CSSGroupingRule).cssRules, element, trackedVarNames, propFilter, varRegex, found)
+    }
+  }
 }
 
 export function Panel({ vars, persist, companionUrl, onClose, width = 300 }: PanelProps) {
@@ -133,9 +205,7 @@ export function Panel({ vars, persist, companionUrl, onClose, width = 300 }: Pan
       e.stopPropagation()
 
       const matches = findMatchingVars(target, allVarNames)
-      if (matches.length > 0) {
-        setInspectedVarNames(matches)
-      }
+      setInspectedVarNames(matches)
     }
 
     const onMouseOver = (e: MouseEvent) => {

@@ -98,16 +98,19 @@ function findMatchingVars(
     })
   }
 
-  // Remonter : scanner les ancetres pour les proprietes heritables
-  let parent = element.parentElement
-  while (parent) {
-    const parentVars = findReferencedVarsFiltered(parent, tracked, INHERITABLE_PROPS)
-    for (const varName of parentVars) {
-      if (!matches.includes(varName)) {
-        matches.push(varName)
+  // Remonter les ancetres seulement si l'element n'a aucune variable directe
+  // (evite le bruit quand l'element override deja les proprietes heritees)
+  if (matches.length === 0) {
+    let parent = element.parentElement
+    while (parent) {
+      const parentVars = findReferencedVarsFiltered(parent, tracked, INHERITABLE_PROPS)
+      for (const varName of parentVars) {
+        if (!matches.includes(varName)) {
+          matches.push(varName)
+        }
       }
+      parent = parent.parentElement
     }
-    parent = parent.parentElement
   }
 
   return matches

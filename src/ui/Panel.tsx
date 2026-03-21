@@ -100,14 +100,17 @@ function findMatchingVars(
 }
 
 export function Panel({ vars, persist, companionUrl, onClose, width = 300 }: PanelProps) {
-  const { groups, framework, modifiedVars, setVar, resetVar, resetAll, originalVars } = useCssVars({
+  const {
+    groups, framework, modifiedVars, setVar, resetVar, resetAll, originalVars,
+    activeMode, hasDarkMode, switchMode, lightModified, darkModified,
+  } = useCssVars({
     customConfig: vars,
     persist,
   })
 
   const [inspecting, setInspecting] = useState(false)
   const [inspectedVarNames, setInspectedVarNames] = useState<string[]>([])
-  const hasChanges = Object.keys(modifiedVars).length > 0
+  const hasChanges = Object.keys(lightModified).length + Object.keys(darkModified).length > 0
 
   const allVars = groups.flatMap(g => g.vars)
   const allVarNames = allVars.map(v => v.name)
@@ -230,6 +233,25 @@ export function Panel({ vars, persist, companionUrl, onClose, width = 300 }: Pan
           </pre>
         </div>
         <div style={styles.headerRight}>
+          {hasDarkMode && (
+            <button
+              onClick={() => switchMode(activeMode === 'light' ? 'dark' : 'light')}
+              style={styles.headerButton}
+              aria-label={activeMode === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+              title={activeMode === 'light' ? 'Dark mode' : 'Light mode'}
+            >
+              {activeMode === 'light' ? (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="4"/>
+                  <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+                </svg>
+              ) : (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+                </svg>
+              )}
+            </button>
+          )}
           <button
             onClick={toggleInspect}
             style={{
@@ -351,7 +373,13 @@ export function Panel({ vars, persist, companionUrl, onClose, width = 300 }: Pan
       </div>
 
       {/* Footer */}
-      <SaveButton modifiedVars={modifiedVars} companionUrl={companionUrl} onReset={resetAll} />
+      <SaveButton
+        modifiedVars={modifiedVars}
+        lightModified={lightModified}
+        darkModified={darkModified}
+        companionUrl={companionUrl}
+        onReset={resetAll}
+      />
     </div>
   )
 }

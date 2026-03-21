@@ -13,11 +13,27 @@ export function removeCssVar(name: string): void {
 }
 
 /**
- * Genere un bloc CSS :root a partir d'un record de vars
+ * Genere les blocs CSS :root et .dark a partir des vars modifiees.
  */
-export function exportCssBlock(vars: Record<string, string>): string {
-  const lines = Object.entries(vars)
-    .map(([key, value]) => `  ${key}: ${value};`)
-    .join('\n')
-  return `:root {\n${lines}\n}`
+export function exportCssBlock(
+  lightVars: Record<string, string>,
+  darkVars: Record<string, string> = {},
+): string {
+  const blocks: string[] = []
+
+  if (Object.keys(lightVars).length > 0) {
+    const lines = Object.entries(lightVars)
+      .map(([key, value]) => `  ${key}: ${value};`)
+      .join('\n')
+    blocks.push(`:root {\n${lines}\n}`)
+  }
+
+  if (Object.keys(darkVars).length > 0) {
+    const lines = Object.entries(darkVars)
+      .map(([key, value]) => `  ${key}: ${value};`)
+      .join('\n')
+    blocks.push(`.dark {\n${lines}\n}`)
+  }
+
+  return blocks.join('\n\n')
 }

@@ -41,6 +41,40 @@
       --radius: 0.625rem;
     }
 
+    .dark {
+      --background: oklch(0.145 0 0);
+      --foreground: oklch(0.985 0 0);
+      --primary: oklch(0.985 0 0);
+      --primary-foreground: oklch(0.205 0.006 286.03);
+      --secondary: oklch(0.269 0.006 286.03);
+      --secondary-foreground: oklch(0.985 0 0);
+      --accent: oklch(0.269 0.006 286.03);
+      --accent-foreground: oklch(0.985 0 0);
+      --destructive: oklch(0.577 0.245 27.33);
+      --muted: oklch(0.269 0.006 286.03);
+      --muted-foreground: oklch(0.708 0.005 286.03);
+      --card: oklch(0.205 0.006 286.03);
+      --card-foreground: oklch(0.985 0 0);
+      --popover: oklch(0.205 0.006 286.03);
+      --popover-foreground: oklch(0.985 0 0);
+      --border: oklch(0.355 0.006 286.03);
+      --input: oklch(0.355 0.006 286.03);
+      --ring: oklch(0.556 0.016 286.03);
+      --sidebar-background: oklch(0.205 0.006 286.03);
+      --sidebar-foreground: oklch(0.985 0 0);
+      --sidebar-primary: oklch(0.488 0.243 264.38);
+      --sidebar-primary-foreground: oklch(0.985 0 0);
+      --sidebar-accent: oklch(0.269 0.006 286.03);
+      --sidebar-accent-foreground: oklch(0.985 0 0);
+      --sidebar-border: oklch(0.355 0.006 286.03);
+      --sidebar-ring: oklch(0.556 0.016 286.03);
+      --chart-1: oklch(0.488 0.243 264.38);
+      --chart-2: oklch(0.696 0.17 162.48);
+      --chart-3: oklch(0.769 0.188 70.08);
+      --chart-4: oklch(0.627 0.265 303.9);
+      --chart-5: oklch(0.645 0.246 16.44);
+    }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: system-ui, -apple-system, sans-serif;
@@ -126,7 +160,10 @@
   </style>
 </head>
 <body>
-  <h1>CssTuner Demo</h1>
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+    <h1>CssTuner Demo</h1>
+    <button class="btn btn-outline" onclick="document.documentElement.classList.toggle('dark'); this.textContent = document.documentElement.classList.contains('dark') ? '☀ Light' : '☾ Dark'">☾ Dark</button>
+  </div>
   <p>Page de test avec des CSS variables shadcn. Ouvre l'overlay en bas a gauche.</p>
 
   <!-- Buttons -->

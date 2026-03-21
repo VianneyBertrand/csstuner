@@ -7,16 +7,18 @@ type SaveStatus = 'idle' | 'saving' | 'saved' | 'error' | 'no-companion'
 
 interface SaveButtonProps {
   modifiedVars: Record<string, string>
+  lightModified: Record<string, string>
+  darkModified: Record<string, string>
   companionUrl?: string
   onReset?: () => void
 }
 
-export function SaveButton({ modifiedVars, companionUrl, onReset }: SaveButtonProps) {
+export function SaveButton({ modifiedVars, lightModified, darkModified, companionUrl, onReset }: SaveButtonProps) {
   const [status, setStatus] = useState<SaveStatus>('idle')
   const [copied, setCopied] = useState(false)
 
   const baseUrl = companionUrl ?? `http://localhost:${COMPANION_PORT}`
-  const hasChanges = Object.keys(modifiedVars).length > 0
+  const hasChanges = Object.keys(lightModified).length + Object.keys(darkModified).length > 0
 
   const handleSave = useCallback(async () => {
     if (!hasChanges) return
@@ -26,7 +28,7 @@ export function SaveButton({ modifiedVars, companionUrl, onReset }: SaveButtonPr
       const res = await fetch(`${baseUrl}/save`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ vars: modifiedVars }),
+        body: JSON.stringify({ vars: { light: lightModified, dark: darkModified } }),
       })
 
       if (res.ok) {
@@ -40,10 +42,10 @@ export function SaveButton({ modifiedVars, companionUrl, onReset }: SaveButtonPr
       setStatus('no-companion')
       setTimeout(() => setStatus('idle'), 5000)
     }
-  }, [modifiedVars, hasChanges, baseUrl])
+  }, [lightModified, darkModified, hasChanges, baseUrl])
 
   const handleCopy = useCallback(async () => {
-    const css = exportCssBlock(modifiedVars)
+    const css = exportCssBlock(lightModified, darkModified)
     await navigator.clipboard.writeText(css)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)

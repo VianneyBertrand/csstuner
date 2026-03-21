@@ -1,10 +1,10 @@
 import { useEffect, useState, useCallback } from 'react'
-import { readAllCssVars } from '../../core/cssVarReader'
+import { readAllCssVars, readDarkCssVars, hasDarkMode as detectDarkMode, isDarkModeActive } from '../../core/cssVarReader'
 import { setCssVar, removeCssVar } from '../../core/cssVarWriter'
 import { detectFramework } from '../../core/frameworkDetector'
 import { groupVars } from '../../core/grouper'
-import { loadPersistedVars, persistVars, clearPersistedVars } from '../../core/storage'
-import type { CssVariable, CssTunerVar, Framework, VarGroup } from '../../core/types'
+import { loadPersistedVars, persistVars, clearPersistedVars, loadActiveMode, persistActiveMode } from '../../core/storage'
+import type { CssVariable, CssTunerVar, Framework, VarGroup, ColorMode } from '../../core/types'
 
 interface UseCssVarsOptions {
   customConfig?: Record<string, CssTunerVar>
@@ -19,83 +19,202 @@ interface UseCssVarsReturn {
   resetVar: (name: string) => void
   resetAll: () => void
   originalVars: Record<string, string>
+  activeMode: ColorMode
+  hasDarkMode: boolean
+  switchMode: (mode: ColorMode) => void
+  lightModified: Record<string, string>
+  darkModified: Record<string, string>
 }
 
 export function useCssVars({ customConfig, persist }: UseCssVarsOptions): UseCssVarsReturn {
-  const [originalVars, setOriginalVars] = useState<Record<string, string>>({})
-  const [modifiedVars, setModifiedVars] = useState<Record<string, string>>({})
+  const [lightOriginals, setLightOriginals] = useState<Record<string, string>>({})
+  const [darkOriginals, setDarkOriginals] = useState<Record<string, string>>({})
+  const [lightModified, setLightModified] = useState<Record<string, string>>({})
+  const [darkModified, setDarkModified] = useState<Record<string, string>>({})
   const [allVars, setAllVars] = useState<CssVariable[]>([])
   const [framework, setFramework] = useState<Framework>('unknown')
+  const [activeMode, setActiveMode] = useState<ColorMode>('light')
+  const [hasDark, setHasDark] = useState(false)
 
-  // Lecture initiale + restauration des overrides persistes
+  // Lecture initiale
   useEffect(() => {
-    const vars = readAllCssVars()
-    setAllVars(vars)
+    const lightVars = readAllCssVars()
+    const darkVars = readDarkCssVars()
+    const darkModeExists = detectDarkMode()
 
-    const originals: Record<string, string> = {}
-    for (const v of vars) {
-      originals[v.name] = v.value
-    }
-    setOriginalVars(originals)
+    setHasDark(darkModeExists)
+    setFramework(detectFramework(lightVars.map(v => v.name)))
 
-    setFramework(detectFramework(vars.map(v => v.name)))
+    // Stocker les originaux
+    const lightOrig: Record<string, string> = {}
+    for (const v of lightVars) lightOrig[v.name] = v.value
+    setLightOriginals(lightOrig)
+
+    const darkOrig: Record<string, string> = {}
+    for (const v of darkVars) darkOrig[v.name] = v.value
+    setDarkOriginals(darkOrig)
+
+    // Determiner le mode initial
+    const initialMode = isDarkModeActive() ? 'dark' : (loadActiveMode() ?? 'light')
+    setActiveMode(initialMode)
 
     // Restaurer les overrides persistes
     if (persist) {
-      const persisted = loadPersistedVars()
-      if (persisted) {
-        for (const [name, value] of Object.entries(persisted)) {
+      const lightPersisted = loadPersistedVars('light')
+      const darkPersisted = loadPersistedVars('dark')
+
+      if (lightPersisted) setLightModified(lightPersisted)
+      if (darkPersisted) setDarkModified(darkPersisted)
+
+      // Appliquer les overrides du mode actif
+      const activePersisted = initialMode === 'light' ? lightPersisted : darkPersisted
+      if (activePersisted) {
+        for (const [name, value] of Object.entries(activePersisted)) {
           setCssVar(name, value)
         }
-        setModifiedVars(persisted)
-        // Mettre a jour allVars avec les valeurs persistees pour sync swatches
-        setAllVars(prev =>
-          prev.map(v => persisted[v.name] ? { ...v, value: persisted[v.name] } : v)
-        )
       }
+
+      // Synchroniser la classe .dark avec le mode initial
+      if (darkModeExists) {
+        if (initialMode === 'dark') {
+          document.documentElement.classList.add('dark')
+        } else {
+          document.documentElement.classList.remove('dark')
+        }
+      }
+
+      // Initialiser allVars avec le mode actif
+      const activeVars = initialMode === 'light' ? lightVars : darkVars
+      const activeOriginals = initialMode === 'light' ? lightOrig : darkOrig
+      const activeMods = initialMode === 'light' ? lightPersisted : darkPersisted
+      setAllVars(activeVars.map(v =>
+        activeMods?.[v.name] ? { ...v, value: activeMods[v.name] } : v
+      ))
+    } else {
+      setAllVars(lightVars)
     }
   }, [persist])
 
+  // Observer les changements de classe .dark par le projet du user
+  useEffect(() => {
+    if (!hasDark) return
+
+    const observer = new MutationObserver(() => {
+      const isDark = document.documentElement.classList.contains('dark')
+      const detectedMode: ColorMode = isDark ? 'dark' : 'light'
+      if (detectedMode !== activeMode) {
+        // Le projet a change le mode — sync le panel sans re-toggle la classe
+        const currentMods = activeMode === 'light' ? lightModified : darkModified
+        for (const name of Object.keys(currentMods)) {
+          removeCssVar(name)
+        }
+
+        const newMods = detectedMode === 'light' ? lightModified : darkModified
+        for (const [name, value] of Object.entries(newMods)) {
+          setCssVar(name, value)
+        }
+
+        const newOriginals = detectedMode === 'light' ? lightOriginals : darkOriginals
+        const newVars = Object.entries(newOriginals).map(([name, value]) => ({
+          name,
+          value: newMods[name] ?? value,
+        }))
+        setAllVars(newVars)
+        setActiveMode(detectedMode)
+        if (persist) persistActiveMode(detectedMode)
+      }
+    })
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    })
+
+    return () => observer.disconnect()
+  }, [hasDark, activeMode, lightModified, darkModified, lightOriginals, darkOriginals, persist])
+
+  const switchMode = useCallback((newMode: ColorMode) => {
+    if (newMode === activeMode) return
+
+    // Retirer les overrides inline du mode actuel
+    const currentMods = activeMode === 'light' ? lightModified : darkModified
+    for (const name of Object.keys(currentMods)) {
+      removeCssVar(name)
+    }
+
+    // Toggle la classe .dark
+    if (newMode === 'dark') {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
+
+    // Appliquer les overrides du nouveau mode
+    const newMods = newMode === 'light' ? lightModified : darkModified
+    for (const [name, value] of Object.entries(newMods)) {
+      setCssVar(name, value)
+    }
+
+    // Mettre a jour allVars avec les vars du nouveau mode
+    const newOriginals = newMode === 'light' ? lightOriginals : darkOriginals
+    const newVars = Object.entries(newOriginals).map(([name, value]) => ({
+      name,
+      value: newMods[name] ?? value,
+    }))
+    setAllVars(newVars)
+
+    setActiveMode(newMode)
+    if (persist) persistActiveMode(newMode)
+  }, [activeMode, lightModified, darkModified, lightOriginals, darkOriginals, persist])
+
+  const modifiedVars = activeMode === 'light' ? lightModified : darkModified
+  const originalVars = activeMode === 'light' ? lightOriginals : darkOriginals
+
   const setVar = useCallback((name: string, value: string) => {
     setCssVar(name, value)
-    setModifiedVars(prev => {
+
+    const setMod = activeMode === 'light' ? setLightModified : setDarkModified
+    setMod(prev => {
       const next = { ...prev, [name]: value }
-      if (persist) persistVars(next)
+      if (persist) persistVars(activeMode, next)
       return next
     })
-    // Mettre a jour allVars pour rafraichir le groupement
     setAllVars(prev =>
       prev.map(v => v.name === name ? { ...v, value } : v)
     )
-  }, [persist])
+  }, [activeMode, persist])
 
   const resetVar = useCallback((name: string) => {
     removeCssVar(name)
-    setModifiedVars(prev => {
+
+    const setMod = activeMode === 'light' ? setLightModified : setDarkModified
+    setMod(prev => {
       const next = { ...prev }
       delete next[name]
       if (persist) {
         if (Object.keys(next).length > 0) {
-          persistVars(next)
+          persistVars(activeMode, next)
         } else {
-          clearPersistedVars()
+          clearPersistedVars(activeMode)
         }
       }
       return next
     })
-    // Restaurer la valeur originale dans allVars
     setAllVars(prev =>
       prev.map(v => v.name === name ? { ...v, value: originalVars[name] ?? v.value } : v)
     )
-  }, [persist, originalVars])
+  }, [activeMode, persist, originalVars])
 
   const resetAll = useCallback(() => {
+    // Retirer les overrides inline du mode actuel
     for (const name of Object.keys(modifiedVars)) {
       removeCssVar(name)
     }
-    setModifiedVars({})
+    // Reset les deux modes
+    setLightModified({})
+    setDarkModified({})
     if (persist) clearPersistedVars()
-    // Restaurer toutes les valeurs originales
+    // Restaurer allVars
     setAllVars(prev =>
       prev.map(v => ({ ...v, value: originalVars[v.name] ?? v.value }))
     )
@@ -103,5 +222,9 @@ export function useCssVars({ customConfig, persist }: UseCssVarsOptions): UseCss
 
   const groups = groupVars(allVars, framework, customConfig)
 
-  return { groups, framework, modifiedVars, setVar, resetVar, resetAll, originalVars }
+  return {
+    groups, framework, modifiedVars, setVar, resetVar, resetAll, originalVars,
+    activeMode, hasDarkMode: hasDark, switchMode,
+    lightModified, darkModified,
+  }
 }

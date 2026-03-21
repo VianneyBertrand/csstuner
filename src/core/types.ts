@@ -17,6 +17,8 @@ export interface CssVariable {
 
 export type ColorFormat = 'oklch' | 'hsl' | 'rgb' | 'hex'
 
+export type ColorMode = 'light' | 'dark'
+
 export type Framework = 'shadcn' | 'tailwind-v4' | 'radix' | 'open-props' | 'unknown'
 
 export interface VarGroup {
@@ -25,7 +27,10 @@ export interface VarGroup {
 }
 
 export interface CompanionSavePayload {
-  vars: Record<string, string>
+  vars: {
+    light: Record<string, string>
+    dark: Record<string, string>
+  }
 }
 
 export interface CompanionHealthResponse {

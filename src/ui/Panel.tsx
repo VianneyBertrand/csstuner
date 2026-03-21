@@ -216,6 +216,13 @@ export function Panel({ vars, persist, companionUrl, onClose, width = 300 }: Pan
     }, 800)
   }, [updateScrollThumb])
 
+  // Cleanup scroll timer on unmount
+  useEffect(() => {
+    return () => {
+      if (scrollTimer.current) clearTimeout(scrollTimer.current)
+    }
+  }, [])
+
   return (
     <div style={styles.panel} role="region" aria-label="CSS Variable Tuner">
       {/* Header */}
@@ -278,7 +285,6 @@ export function Panel({ vars, persist, companionUrl, onClose, width = 300 }: Pan
         </div>
       </div>
 
-{/* accent line removed */}
 
       {/* Contenu */}
       <div style={styles.contentWrap}>
@@ -374,7 +380,6 @@ export function Panel({ vars, persist, companionUrl, onClose, width = 300 }: Pan
 
       {/* Footer */}
       <SaveButton
-        modifiedVars={modifiedVars}
         lightModified={lightModified}
         darkModified={darkModified}
         companionUrl={companionUrl}
@@ -410,12 +415,7 @@ const styles: Record<string, React.CSSProperties> = {
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  accentLine: {
-    height: 0,
-    borderBottom: '1.5px dashed #d4d4d8',
-    margin: '0 16px',
-    flexShrink: 0,
-  },
+
   headerLeft: {
     display: 'flex',
     alignItems: 'center',
@@ -427,12 +427,7 @@ const styles: Record<string, React.CSSProperties> = {
     gap: 2,
     marginRight: -6,
   },
-  title: {
-    fontWeight: 600,
-    fontSize: 13,
-    letterSpacing: '-0.3px',
-    color: '#18181b',
-  },
+
   asciiLogo: {
     margin: 0,
     padding: 0,

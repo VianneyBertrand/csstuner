@@ -6,14 +6,13 @@ const COMPANION_PORT = 5599
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error' | 'no-companion'
 
 interface SaveButtonProps {
-  modifiedVars: Record<string, string>
   lightModified: Record<string, string>
   darkModified: Record<string, string>
   companionUrl?: string
   onReset?: () => void
 }
 
-export function SaveButton({ modifiedVars, lightModified, darkModified, companionUrl, onReset }: SaveButtonProps) {
+export function SaveButton({ lightModified, darkModified, companionUrl, onReset }: SaveButtonProps) {
   const [status, setStatus] = useState<SaveStatus>('idle')
   const [copied, setCopied] = useState(false)
 
@@ -49,7 +48,7 @@ export function SaveButton({ modifiedVars, lightModified, darkModified, companio
     await navigator.clipboard.writeText(css)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
-  }, [modifiedVars])
+  }, [lightModified, darkModified])
 
   return (
     <div style={styles.container} role="status" aria-live="polite">

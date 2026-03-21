@@ -26,6 +26,7 @@ export function VarGroup({ group, modifiedVars, onVarChange, onVarReset }: VarGr
           {group.vars.filter(v => isColorValue(v.value)).map(v => {
             const isModified = v.name in modifiedVars
             const isPickerOpen = openPicker === v.name
+            const isLight = (parseColor(v.value)?.l ?? 1) > 0.85
 
             return (
               <div key={v.name} style={{
@@ -35,7 +36,6 @@ export function VarGroup({ group, modifiedVars, onVarChange, onVarReset }: VarGr
                 <div
                   style={{
                     ...styles.varRow,
-                    ...(isPickerOpen ? styles.varRowActive : {}),
                     cursor: 'pointer',
                   }}
                   role="button"
@@ -55,15 +55,13 @@ export function VarGroup({ group, modifiedVars, onVarChange, onVarReset }: VarGr
                     style={{
                       ...styles.colorSwatch,
                       backgroundColor: v.value,
-                      ...(isPickerOpen ? styles.swatchActive : {}),
-                      ...((parseColor(v.value)?.l ?? 0) > 0.85 ? { border: '1px solid #d4d4d8' } : {}),
+                      ...(isLight ? { border: '1px solid #d4d4d8' } : {}),
                     }}
                   />
 
                   {/* Label */}
                   <span style={{
                     ...styles.varLabel,
-                    ...(isModified ? styles.modifiedLabel : {}),
                     ...(isPickerOpen ? styles.activeLabel : {}),
                   }}>
                     {varToLabel(v.name)}
@@ -122,19 +120,8 @@ const styles: Record<string, React.CSSProperties> = {
     userSelect: 'none',
     WebkitUserSelect: 'none',
   },
-  groupPrefix: {
-    color: '#6366f1',
-    fontSize: 12,
-    lineHeight: 1,
-  },
   groupName: {
     flex: 1,
-  },
-  count: {
-    fontSize: 10,
-    color: '#c4c4cc',
-    fontWeight: 500,
-    fontFamily: "inherit",
   },
   varList: {
     paddingLeft: 0,
@@ -163,9 +150,6 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     gap: 10,
     padding: 0,
-    borderRadius: 5,
-  },
-  varRowActive: {
   },
   colorSwatch: {
     width: 28,
@@ -174,22 +158,14 @@ const styles: Record<string, React.CSSProperties> = {
     border: 'none',
     flexShrink: 0,
     padding: 0,
-    transition: 'transform 100ms ease, box-shadow 150ms ease',
-    boxShadow: 'none',
-  },
-  swatchActive: {
   },
   varLabel: {
     flex: 1,
     fontSize: 12,
     color: '#52525b',
     fontWeight: 400,
-    letterSpacing: '0px',
-    transition: 'color 100ms ease',
     userSelect: 'none',
     WebkitUserSelect: 'none',
-  },
-  modifiedLabel: {
   },
   activeLabel: {
     color: '#6b7280',
@@ -209,21 +185,6 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     justifyContent: 'center',
     transition: 'color 100ms ease',
-  },
-  valueInput: {
-    width: 72,
-    padding: '3px 6px',
-    fontSize: 11,
-    fontFamily: "inherit",
-    background: '#fff',
-    border: '1px solid #d4d4d8',
-    borderRadius: 4,
-    color: '#1a1a1a',
-    outline: 'none',
-    flexShrink: 0,
-    transition: 'border-color 150ms ease',
-    letterSpacing: '-0.3px',
-    boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
   },
   pickerWrap: {
     padding: 0,

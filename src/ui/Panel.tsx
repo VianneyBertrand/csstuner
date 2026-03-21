@@ -98,39 +98,73 @@ function findMatchingVars(
     })
   }
 
-  // Remonter les ancetres seulement si l'element n'a aucune variable directe
-  // (evite le bruit quand l'element override deja les proprietes heritees)
-  if (matches.length === 0) {
-    let parent = element.parentElement
-    while (parent) {
-      const parentVars = findReferencedVarsFiltered(parent, tracked, INHERITABLE_PROPS)
-      for (const varName of parentVars) {
-        if (!matches.includes(varName)) {
-          matches.push(varName)
-        }
+  // Remonter les ancetres pour les proprietes heritables,
+  // mais exclure celles que l'element override directement
+  const directProps = getDirectProperties(element)
+  let parent = element.parentElement
+  while (parent) {
+    const parentVars = findReferencedVarsWithProps(parent, tracked, INHERITABLE_PROPS)
+    for (const { varName, prop } of parentVars) {
+      if (!matches.includes(varName) && !directProps.has(prop)) {
+        matches.push(varName)
       }
-      parent = parent.parentElement
     }
+    parent = parent.parentElement
   }
 
   return matches
 }
 
 /**
- * Comme findReferencedVars mais filtre pour ne garder que les variables
- * utilisees dans des proprietes matchant le pattern donne.
+ * Trouve les proprietes CSS definies directement sur un element
+ * (via les regles qui le matchent), pour savoir ce qu'il override.
  */
-function findReferencedVarsFiltered(
+function getDirectProperties(element: HTMLElement): Set<string> {
+  const props = new Set<string>()
+
+  for (const sheet of Array.from(document.styleSheets)) {
+    try {
+      collectDirectProps(sheet.cssRules, element, props)
+    } catch {
+      // Cross-origin
+    }
+  }
+
+  return props
+}
+
+function collectDirectProps(rules: CSSRuleList, element: HTMLElement, props: Set<string>) {
+  for (const rule of Array.from(rules)) {
+    if (rule instanceof CSSStyleRule) {
+      try {
+        if (!element.matches(rule.selectorText)) continue
+      } catch {
+        continue
+      }
+      for (const prop of Array.from(rule.style)) {
+        props.add(prop)
+      }
+    } else if ('cssRules' in rule) {
+      collectDirectProps((rule as CSSGroupingRule).cssRules, element, props)
+    }
+  }
+}
+
+/**
+ * Trouve les variables heritables d'un element avec le nom de la propriete,
+ * pour pouvoir filtrer celles qui sont overridees par l'element enfant.
+ */
+function findReferencedVarsWithProps(
   element: HTMLElement,
   trackedVarNames: Set<string>,
   propFilter: RegExp,
-): string[] {
-  const found: string[] = []
+): Array<{ varName: string; prop: string }> {
+  const found: Array<{ varName: string; prop: string }> = []
   const varRegex = /var\(\s*(--[\w-]+)/g
 
   for (const sheet of Array.from(document.styleSheets)) {
     try {
-      walkRulesFiltered(sheet.cssRules, element, trackedVarNames, propFilter, varRegex, found)
+      walkRulesWithProps(sheet.cssRules, element, trackedVarNames, propFilter, varRegex, found)
     } catch {
       // Cross-origin
     }
@@ -139,13 +173,13 @@ function findReferencedVarsFiltered(
   return found
 }
 
-function walkRulesFiltered(
+function walkRulesWithProps(
   rules: CSSRuleList,
   element: HTMLElement,
   trackedVarNames: Set<string>,
   propFilter: RegExp,
   varRegex: RegExp,
-  found: string[],
+  found: Array<{ varName: string; prop: string }>,
 ) {
   for (const rule of Array.from(rules)) {
     if (rule instanceof CSSStyleRule) {
@@ -154,7 +188,6 @@ function walkRulesFiltered(
       } catch {
         continue
       }
-      // Scanner chaque propriete individuellement
       for (const prop of Array.from(rule.style)) {
         if (!propFilter.test(prop)) continue
         const value = rule.style.getPropertyValue(prop)
@@ -162,13 +195,13 @@ function walkRulesFiltered(
         let match: RegExpExecArray | null
         while ((match = varRegex.exec(value)) !== null) {
           const varName = match[1]
-          if (trackedVarNames.has(varName) && !found.includes(varName)) {
-            found.push(varName)
+          if (trackedVarNames.has(varName) && !found.some(f => f.varName === varName)) {
+            found.push({ varName, prop })
           }
         }
       }
     } else if ('cssRules' in rule) {
-      walkRulesFiltered((rule as CSSGroupingRule).cssRules, element, trackedVarNames, propFilter, varRegex, found)
+      walkRulesWithProps((rule as CSSGroupingRule).cssRules, element, trackedVarNames, propFilter, varRegex, found)
     }
   }
 }

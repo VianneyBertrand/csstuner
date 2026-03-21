@@ -1,9 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import type { CssTunerProps, CssVariable } from '../core/types'
 import { useCssVars } from './hooks/useCssVars'
-import { isColorValue, varToLabel } from '../core/cssVarReader'
+import { isColorValue } from '../core/cssVarReader'
 import { VarGroup } from './VarGroup'
-import { ColorPicker } from './ColorPicker'
 import { SaveButton } from './SaveButton'
 
 interface PanelProps {
@@ -377,7 +376,7 @@ export function Panel({ vars, persist, companionUrl, onClose, width = 300 }: Pan
               </button>
             </div>
           ) : (
-            <div style={styles.inspectResults}>
+            <>
               <div style={styles.inspectResultsHeader}>
                 <p style={styles.inspectResultsCount}>
                   {inspectedVars.filter(v => isColorValue(v.value)).length} variable{inspectedVars.filter(v => isColorValue(v.value)).length > 1 ? 's' : ''}
@@ -386,39 +385,13 @@ export function Panel({ vars, persist, companionUrl, onClose, width = 300 }: Pan
                   Exit
                 </button>
               </div>
-              {inspectedVars.filter(v => isColorValue(v.value)).map(v => {
-                const isModified = v.name in modifiedVars
-                return (
-                  <div key={v.name} style={styles.inspectVarItem}>
-                    <div style={styles.inspectVarHeader}>
-                      <div style={{
-                        ...styles.inspectSwatch,
-                        backgroundColor: v.value,
-                      }} aria-hidden="true" />
-                      <span style={styles.inspectVarName}>{varToLabel(v.name)}</span>
-                      {isModified && (
-                        <button
-                          onClick={() => resetVar(v.name)}
-                          style={styles.resetButton}
-                          aria-label={`Reset ${varToLabel(v.name)}`}
-                        >
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
-                            <path d="M3 3v5h5"/>
-                          </svg>
-                        </button>
-                      )}
-                    </div>
-                    {isColorValue(v.value) && (
-                      <ColorPicker
-                        value={v.value}
-                        onChange={val => setVar(v.name, val)}
-                      />
-                    )}
-                  </div>
-                )
-              })}
-            </div>
+              <VarGroup
+                group={{ name: 'Inspected', vars: inspectedVars }}
+                modifiedVars={modifiedVars}
+                onVarChange={setVar}
+                onVarReset={resetVar}
+              />
+            </>
           )
         ) : (
           // --- Vue normale (groupes) ---
@@ -598,12 +571,6 @@ const styles: Record<string, React.CSSProperties> = {
     fontFamily: 'inherit',
     boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
   },
-  // Inspect results
-  inspectResults: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 12,
-  },
   inspectResultsHeader: {
     display: 'flex',
     justifyContent: 'space-between',
@@ -628,51 +595,5 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '3px 8px',
     transition: 'all 150ms ease',
     fontFamily: 'inherit',
-  },
-  inspectVarItem: {
-    background: '#fff',
-    borderRadius: 12,
-    padding: '8px 16px',
-    gap: 8,
-    display: 'flex',
-    flexDirection: 'column',
-  },
-  inspectVarHeader: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 10,
-  },
-  inspectSwatch: {
-    width: 28,
-    height: 28,
-    borderRadius: '50%',
-    border: '2px solid #fff',
-    flexShrink: 0,
-    boxShadow: '0 0 0 1px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.1)',
-  },
-  inspectVarName: {
-    flex: 1,
-    fontSize: 12,
-    fontWeight: 400,
-    color: '#52525b',
-    letterSpacing: '0px',
-    userSelect: 'none',
-    WebkitUserSelect: 'none',
-  },
-  resetButton: {
-    background: 'none',
-    border: 'none',
-    color: '#9ca3af',
-    cursor: 'pointer',
-    padding: 6,
-    marginRight: -6,
-    minWidth: 28,
-    minHeight: 28,
-    flexShrink: 0,
-    borderRadius: 4,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    transition: 'color 100ms ease',
   },
 }

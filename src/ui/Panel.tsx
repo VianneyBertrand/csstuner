@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import type { CssTunerProps, CssVariable } from '../core/types'
 import { useCssVars } from './hooks/useCssVars'
-import { isColorValue } from '../core/cssVarReader'
 import { VarGroup } from './VarGroup'
 import { SaveButton } from './SaveButton'
 
@@ -397,37 +396,16 @@ export function Panel({ vars, persist, companionUrl, onClose, width = 300 }: Pan
           {inspecting ? (
           // --- Vue inspect ---
           inspectedVars.length === 0 ? (
-            <div style={styles.inspectEmpty}>
-              <div style={styles.inspectEmptyRing}>
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#3f3f46' }}>
-                  <circle cx="11" cy="11" r="8"/>
-                  <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-                </svg>
-              </div>
-              <p style={styles.inspectEmptyText}>
-                Select an element to inspect its CSS variables
-              </p>
-              <button onClick={toggleInspect} style={styles.exitInspectButton}>
-                Exit inspection
-              </button>
-            </div>
+            <p style={styles.inspectEmptyText}>
+              Click an element to inspect its CSS variables
+            </p>
           ) : (
-            <>
-              <div style={styles.inspectResultsHeader}>
-                <p style={styles.inspectResultsCount}>
-                  {inspectedVars.filter(v => isColorValue(v.value)).length} variable{inspectedVars.filter(v => isColorValue(v.value)).length > 1 ? 's' : ''}
-                </p>
-                <button onClick={toggleInspect} style={styles.exitInspectSmall} aria-label="Exit inspection mode">
-                  Exit
-                </button>
-              </div>
-              <VarGroup
-                group={{ name: 'Inspected', vars: inspectedVars }}
-                modifiedVars={modifiedVars}
-                onVarChange={setVar}
-                onVarReset={resetVar}
-              />
-            </>
+            <VarGroup
+              group={{ name: 'Inspected', vars: inspectedVars }}
+              modifiedVars={modifiedVars}
+              onVarChange={setVar}
+              onVarReset={resetVar}
+            />
           )
         ) : (
           // --- Vue normale (groupes) ---
@@ -567,69 +545,10 @@ const styles: Record<string, React.CSSProperties> = {
     fontStyle: 'italic',
   },
   // Inspect empty state
-  inspectEmpty: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '56px 24px',
-    gap: 16,
-  },
-  inspectEmptyRing: {
-    width: 56,
-    height: 56,
-    borderRadius: 16,
-    background: '#fff',
-    border: '1px solid #d4d4d8',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   inspectEmptyText: {
     color: '#9ca3af',
     fontSize: 12,
     textAlign: 'center',
-    lineHeight: 1.6,
-    maxWidth: 200,
-  },
-  exitInspectButton: {
-    marginTop: 4,
-    padding: '6px 14px',
-    background: '#fff',
-    border: '1px solid #d4d4d8',
-    borderRadius: 6,
-    color: '#6b7280',
-    cursor: 'pointer',
-    fontSize: 11,
-    fontWeight: 500,
-    transition: 'all 150ms ease',
-    fontFamily: 'inherit',
-    boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
-  },
-  inspectResultsHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 6,
-    padding: '0 16px',
-  },
-  inspectResultsCount: {
-    color: '#9ca3af',
-    fontSize: 10,
-    fontWeight: 500,
-    letterSpacing: '0.3px',
-  },
-  exitInspectSmall: {
-    background: '#fff',
-    border: '1px solid #d4d4d8',
-    borderRadius: 4,
-    color: '#6b7280',
-    cursor: 'pointer',
-    fontSize: 10,
-    fontWeight: 500,
-    padding: '3px 8px',
-    transition: 'all 150ms ease',
-    fontFamily: 'inherit',
+    padding: '40px 24px',
   },
 }

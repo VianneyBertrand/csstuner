@@ -48,6 +48,10 @@ export function useCssVars({ customConfig, persist }: UseCssVarsOptions): UseCss
           setCssVar(name, value)
         }
         setModifiedVars(persisted)
+        // Mettre a jour allVars avec les valeurs persistees pour sync swatches
+        setAllVars(prev =>
+          prev.map(v => persisted[v.name] ? { ...v, value: persisted[v.name] } : v)
+        )
       }
     }
   }, [persist])

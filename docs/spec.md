@@ -106,6 +106,7 @@ Composant React + companion local. Le dev installe, tweake, sauvegarde.
 - Save-to-file via companion (`npx csstuner`)
 - Detection auto du fichier CSS cible
 - Copy CSS (alternative au Save)
+- Dark mode toggle (light/dark, deux sets independants)
 - localStorage entre sessions
 
 ### V1.5
@@ -190,6 +191,34 @@ Strategie :
   }}
 />
 ```
+
+#### Dark Mode - Decisions
+
+**Toggle light/dark dans le header du panel.**
+
+Le panel affiche un toggle sun/moon qui switch le mode actif. Le dev edite un mode a la fois, sur sa vraie page.
+
+**Detection automatique :**
+- Check la presence de la class `.dark` sur `<html>` (convention shadcn/Tailwind)
+- Fallback sur `prefers-color-scheme` media query
+- Si aucune regle `.dark` trouvee dans les stylesheets → le toggle est masque
+
+**Deux sets de valeurs independants :**
+- Lecture des vars via iteration `document.styleSheets` → `cssRules`, en matchant `selectorText === ':root'` (light) et `selectorText === '.dark'` (dark)
+- Chaque mode a son propre state en memoire
+- Le toggle switch reellement la page (ajoute/retire `.dark` sur `<html>`) pour que le dev voie le resultat live
+
+**Edition par mode :**
+- Le dev edite les vars du mode actuellement affiche
+- Les modifications sont appliquees en live via `setProperty` sur `:root` (inline override)
+- Quand il switch de mode, les sliders/swatches se mettent a jour avec les valeurs de l'autre mode
+
+**Save :**
+- Le companion ecrit les deux blocs (`:root {}` et `.dark {}`) dans le fichier CSS
+- Seules les vars modifiees sont ecrites, les autres restent intactes
+
+**localStorage :**
+- Persiste les deux sets separement (cle `csstuner:light` et `csstuner:dark`)
 
 #### Onglet AI (Pro)
 - Prompt bar : "SaaS fintech, serieux, bleu profond"
@@ -396,6 +425,7 @@ Deux entry points tsup :
 | Shadow DOM isolation | Moyen | Creer container, attacher Shadow DOM, monter React dedans, styles inlines |
 | Companion local (save-to-file) | Moyen | Serveur Node.js, parse/write CSS, detection auto du fichier cible |
 | Detection fichier CSS cible | Moyen | Parse `components.json`, scan `:root` et `@theme` dans les fichiers CSS |
+| Dark mode toggle | Facile | Toggle dans le header, lecture des deux sets via `cssRules`, switch class `.dark` sur `<html>` |
 
 ### V1.5
 

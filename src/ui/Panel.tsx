@@ -282,13 +282,13 @@ export function Panel({ vars, persist, companionUrl, onClose, width = 300 }: Pan
             <div style={styles.inspectResults}>
               <div style={styles.inspectResultsHeader}>
                 <p style={styles.inspectResultsCount}>
-                  {inspectedVars.length} variable{inspectedVars.length > 1 ? 's' : ''}
+                  {inspectedVars.filter(v => isColorValue(v.value)).length} variable{inspectedVars.filter(v => isColorValue(v.value)).length > 1 ? 's' : ''}
                 </p>
                 <button onClick={toggleInspect} style={styles.exitInspectSmall} aria-label="Exit inspection mode">
                   Exit
                 </button>
               </div>
-              {inspectedVars.map(v => {
+              {inspectedVars.filter(v => isColorValue(v.value)).map(v => {
                 const isModified = v.name in modifiedVars
                 return (
                   <div key={v.name} style={styles.inspectVarItem}>
@@ -304,7 +304,10 @@ export function Panel({ vars, persist, companionUrl, onClose, width = 300 }: Pan
                           style={styles.resetButton}
                           aria-label={`Reset ${varToLabel(v.name)}`}
                         >
-                          {'\u21ba'}
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                            <path d="M3 3v5h5"/>
+                          </svg>
                         </button>
                       )}
                     </div>
@@ -359,7 +362,7 @@ const styles: Record<string, React.CSSProperties> = {
     top: 0,
     left: 0,
     zIndex: 99998,
-    width: 300,
+    width: 272,
     height: '100vh',
     background: '#f5f5f6',
     color: '#1a1a1a',
@@ -496,14 +499,14 @@ const styles: Record<string, React.CSSProperties> = {
   inspectResults: {
     display: 'flex',
     flexDirection: 'column',
-    gap: 4,
+    gap: 12,
   },
   inspectResultsHeader: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 6,
-    padding: '0 2px',
+    padding: '0 16px',
   },
   inspectResultsCount: {
     color: '#9ca3af',
@@ -525,16 +528,16 @@ const styles: Record<string, React.CSSProperties> = {
   },
   inspectVarItem: {
     background: '#fff',
-    border: '1px solid #e4e4e7',
-    borderRadius: 8,
-    padding: '10px 12px',
-    marginBottom: 6,
-    boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+    borderRadius: 12,
+    padding: '8px 16px',
+    gap: 8,
+    display: 'flex',
+    flexDirection: 'column',
   },
   inspectVarHeader: {
     display: 'flex',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
   },
   inspectSwatch: {
     width: 28,
@@ -547,17 +550,19 @@ const styles: Record<string, React.CSSProperties> = {
   inspectVarName: {
     flex: 1,
     fontSize: 12,
-    fontWeight: 500,
-    color: '#1a1a1a',
-    letterSpacing: '-0.1px',
+    fontWeight: 400,
+    color: '#52525b',
+    letterSpacing: '0px',
+    userSelect: 'none',
+    WebkitUserSelect: 'none',
   },
   resetButton: {
     background: 'none',
     border: 'none',
     color: '#9ca3af',
     cursor: 'pointer',
-    fontSize: 13,
-    padding: '4px 6px',
+    padding: 6,
+    marginRight: -6,
     minWidth: 28,
     minHeight: 28,
     flexShrink: 0,

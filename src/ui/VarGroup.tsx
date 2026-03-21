@@ -22,8 +22,7 @@ export function VarGroup({ group, modifiedVars, onVarChange, onVarReset }: VarGr
 
       {/* Variables */}
       <div style={styles.varList}>
-          {group.vars.map(v => {
-            const isColor = isColorValue(v.value)
+          {group.vars.filter(v => isColorValue(v.value)).map(v => {
             const isModified = v.name in modifiedVars
             const isPickerOpen = openPicker === v.name
 
@@ -36,40 +35,28 @@ export function VarGroup({ group, modifiedVars, onVarChange, onVarReset }: VarGr
                   style={{
                     ...styles.varRow,
                     ...(isPickerOpen ? styles.varRowActive : {}),
-                    ...(isColor ? { cursor: 'pointer' } : {}),
+                    cursor: 'pointer',
                   }}
-                  {...(isColor ? {
-                    role: 'button',
-                    tabIndex: 0,
-                    'aria-label': `Edit ${varToLabel(v.name)}`,
-                    'aria-expanded': isPickerOpen,
-                    onClick: () => setOpenPicker(isPickerOpen ? null : v.name),
-                    onKeyDown: (e: React.KeyboardEvent) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault()
-                        setOpenPicker(isPickerOpen ? null : v.name)
-                      }
-                    },
-                  } : {})}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Edit ${varToLabel(v.name)}`}
+                  aria-expanded={isPickerOpen}
+                  onClick={() => setOpenPicker(isPickerOpen ? null : v.name)}
+                  onKeyDown={(e: React.KeyboardEvent) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      setOpenPicker(isPickerOpen ? null : v.name)
+                    }
+                  }}
                 >
-                  {/* Swatch ou valeur */}
-                  {isColor ? (
-                    <div
-                      style={{
-                        ...styles.colorSwatch,
-                        backgroundColor: v.value,
-                        ...(isPickerOpen ? styles.swatchActive : {}),
-                      }}
-                    />
-                  ) : (
-                    <input
-                      type="text"
-                      value={v.value}
-                      onChange={e => onVarChange(v.name, e.target.value)}
-                      style={styles.valueInput}
-                      aria-label={varToLabel(v.name)}
-                    />
-                  )}
+                  {/* Swatch */}
+                  <div
+                    style={{
+                      ...styles.colorSwatch,
+                      backgroundColor: v.value,
+                      ...(isPickerOpen ? styles.swatchActive : {}),
+                    }}
+                  />
 
                   {/* Label */}
                   <span style={{
@@ -100,7 +87,7 @@ export function VarGroup({ group, modifiedVars, onVarChange, onVarReset }: VarGr
                 </div>
 
                 {/* Color picker inline */}
-                {isPickerOpen && isColor && (
+                {isPickerOpen && (
                   <div style={styles.pickerWrap}>
                     <ColorPicker
                       value={v.value}

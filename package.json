@@ -36,7 +36,12 @@
     "tailwind",
     "overlay"
   ],
-  "author": "",
+  "author": "Vianney Bertrand",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/VianneyBertrand/csstuner.git"
+  },
+  "homepage": "https://github.com/VianneyBertrand/csstuner",
   "license": "MIT",
   "peerDependencies": {
     "react": ">=18",

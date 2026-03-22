@@ -206,7 +206,7 @@ function walkRulesWithProps(
   }
 }
 
-const AI_ENDPOINT_DEFAULT = 'https://csstuner.com/api/ai'
+const AI_ENDPOINT_DEFAULT = 'https://landing-theta-inky.vercel.app/api/ai'
 
 export function Panel({ vars, persist, companionUrl, aiEndpoint, onClose, width = 300 }: PanelProps) {
   const {
@@ -299,6 +299,12 @@ export function Panel({ vars, persist, companionUrl, aiEndpoint, onClose, width 
   const handleAiSubmit = useCallback(async () => {
     if (!aiPrompt.trim() || aiLoading) return
     setAiLoading(true)
+
+    // En mode inspect avec sélection, ne changer que les variables de l'élément
+    const targetVars = inspecting && inspectedVarNames.length > 0
+      ? inspectedVarNames
+      : allVarNames
+
     try {
       const endpoint = aiEndpoint ?? AI_ENDPOINT_DEFAULT
       const res = await fetch(endpoint, {
@@ -306,13 +312,13 @@ export function Panel({ vars, persist, companionUrl, aiEndpoint, onClose, width 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           prompt: aiPrompt,
-          variables: allVarNames,
+          variables: targetVars,
         }),
       })
       if (!res.ok) throw new Error('AI request failed')
       const { palette } = await res.json() as { palette: Record<string, string> }
       for (const [name, value] of Object.entries(palette)) {
-        if (allVarNames.includes(name)) {
+        if (targetVars.includes(name)) {
           setVar(name, value)
         }
       }
@@ -321,7 +327,7 @@ export function Panel({ vars, persist, companionUrl, aiEndpoint, onClose, width 
     } finally {
       setAiLoading(false)
     }
-  }, [aiPrompt, aiLoading, aiEndpoint, allVarNames, setVar])
+  }, [aiPrompt, aiLoading, aiEndpoint, allVarNames, inspecting, inspectedVarNames, setVar])
 
   // Custom overlay scrollbar
   const contentRef = useRef<HTMLDivElement>(null)

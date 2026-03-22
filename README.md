@@ -1,8 +1,6 @@
-```
-█▀▀ █▀▀ █▀▀ ▀█▀ █ █ █▀█ █▀▀ █▀▄
-█   ▀▀█ ▀▀█  █  █ █ █ █ █▀▀ █▀▄
-▀▀▀ ▀▀▀ ▀▀▀  ▀  ▀▀▀ ▀ ▀ ▀▀▀ ▀ ▀
-```
+<p align="center">
+  <img src="https://raw.githubusercontent.com/VianneyBertrand/csstuner/main/assets/logo.svg" alt="CssTuner" width="400" />
+</p>
 
 Devtool overlay to tune CSS design tokens live on your real pages.
 

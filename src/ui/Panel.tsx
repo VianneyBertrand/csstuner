@@ -543,7 +543,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontFamily: "'Geist Mono', 'SF Mono', ui-monospace, monospace",
     fontSize: 12,
     WebkitFontSmoothing: 'antialiased',
-    boxShadow: '2px 0 12px rgba(0,0,0,0.06)',
+    boxShadow: 'none',
   },
   header: {
     padding: '12px 16px',

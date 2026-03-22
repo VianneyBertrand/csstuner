@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 540 60" width="540" height="60">
+  <style>
+    text { font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', ui-monospace, monospace; font-size: 16px; white-space: pre; }
+    .css { fill: #18181b; }
+    .tuner { fill: #6366f1; }
+  </style>
+  <text y="16">
+    <tspan class="css">█▀▀ █▀▀ █▀▀</tspan><tspan class="tuner"> ▀█▀ █ █ █▀█ █▀▀ █▀▄</tspan>
+  </text>
+  <text y="36">
+    <tspan class="css">█   ▀▀█ ▀▀█</tspan><tspan class="tuner">  █  █ █ █ █ █▀▀ █▀▄</tspan>
+  </text>
+  <text y="56">
+    <tspan class="css">▀▀▀ ▀▀▀ ▀▀▀</tspan><tspan class="tuner">  ▀  ▀▀▀ ▀ ▀ ▀▀▀ ▀ ▀</tspan>
+  </text>
+</svg>

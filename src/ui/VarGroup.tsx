@@ -169,7 +169,7 @@ const styles: Record<string, React.CSSProperties> = {
     color: '#9ca3af',
     cursor: 'pointer',
     padding: 6,
-    marginRight: -6,
+    marginRight: -10,
     minWidth: 28,
     minHeight: 28,
     flexShrink: 0,

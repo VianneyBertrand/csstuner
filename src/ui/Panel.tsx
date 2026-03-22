@@ -222,11 +222,12 @@ export function Panel({ vars, persist, companionUrl, aiEndpoint, onClose, width 
   const [aiOpen, setAiOpen] = useState(false)
   const [aiPrompt, setAiPrompt] = useState('')
   const [aiLoading, setAiLoading] = useState(false)
-  const [aiNeedsKey, setAiNeedsKey] = useState(false)
   const [licenseKey, setLicenseKey] = useState(() => {
-    if (typeof window !== 'undefined') return localStorage.getItem('csstuner:pro') ?? ''
-    return ''
+    try { return localStorage.getItem('csstuner:pro') ?? '' } catch { return '' }
   })
+  const [aiNeedsKey, setAiNeedsKey] = useState(!licenseKey.startsWith('cst_'))
+  const [aiJustActivated, setAiJustActivated] = useState(false)
+  const [aiShowKeyInput, setAiShowKeyInput] = useState(false)
   const hasChanges = Object.keys(lightModified).length + Object.keys(darkModified).length > 0
 
   const allVars = groups.flatMap(g => g.vars)
@@ -322,7 +323,11 @@ export function Panel({ vars, persist, companionUrl, aiEndpoint, onClose, width 
         }),
       })
       if (res.status === 403) {
+        setLicenseKey('')
+        try { localStorage.removeItem('csstuner:pro') } catch {}
         setAiNeedsKey(true)
+        setAiJustActivated(false)
+        setAiShowKeyInput(false)
         setAiLoading(false)
         return
       }
@@ -460,58 +465,95 @@ export function Panel({ vars, persist, companionUrl, aiEndpoint, onClose, width 
       {aiOpen && (
         <div style={styles.aiBar}>
           {aiNeedsKey ? (
-            <>
-              <input
-                type="text"
-                value={licenseKey}
-                onChange={e => {
-                  setLicenseKey(e.target.value)
-                  localStorage.setItem('csstuner:pro', e.target.value)
-                }}
-                onKeyDown={e => { if (e.key === 'Enter' && licenseKey.startsWith('cst_')) { setAiNeedsKey(false); handleAiSubmit() }}}
-                placeholder="Enter license key (cst_...)"
-                style={styles.aiInput}
-              />
-              {licenseKey.startsWith('cst_') ? (
-                <button
-                  onClick={() => { setAiNeedsKey(false); handleAiSubmit() }}
-                  style={styles.aiSubmit}
-                >
-                  Activate
-                </button>
-              ) : (
-                <a
-                  href="https://buy.stripe.com/test_dRm00jaOaeCt19YefS3wQ00"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={styles.aiGetPro}
-                >
-                  Get Pro
-                </a>
-              )}
-            </>
+            <div style={styles.aiKeySection}>
+              <div style={styles.aiKeyRow}>
+                {(licenseKey.startsWith('cst_') || aiShowKeyInput) ? (
+                  <>
+                    <input
+                      type="text"
+                      value={licenseKey}
+                      onChange={e => {
+                        setLicenseKey(e.target.value)
+                        try { localStorage.setItem('csstuner:pro', e.target.value) } catch {}
+                      }}
+                      onKeyDown={e => { if (e.key === 'Enter' && licenseKey.startsWith('cst_')) { setAiNeedsKey(false); setAiJustActivated(true) }}}
+                      placeholder="Paste your license key"
+                      style={styles.aiInput}
+                      autoFocus
+                    />
+                    {licenseKey.startsWith('cst_') ? (
+                      <button
+                        onClick={() => { setAiNeedsKey(false); setAiJustActivated(true) }}
+                        style={styles.aiSubmit}
+                      >
+                        Activate
+                      </button>
+                    ) : (
+                      <a
+                        href="https://buy.stripe.com/test_dRm00jaOaeCt19YefS3wQ00"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={styles.aiGetPro}
+                      >
+                        Get Pro
+                      </a>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <input
+                      type="text"
+                      placeholder="Describe a style..."
+                      style={styles.aiInput}
+                      readOnly
+                      onFocus={() => setAiShowKeyInput(true)}
+                    />
+                    <a
+                      href="https://buy.stripe.com/test_dRm00jaOaeCt19YefS3wQ00"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={styles.aiGetPro}
+                    >
+                      Get Pro
+                    </a>
+                  </>
+                )}
+              </div>
+              <p style={styles.aiKeyDesc}>
+                {(licenseKey.startsWith('cst_') || aiShowKeyInput)
+                  ? 'Paste the key from your purchase confirmation.'
+                  : 'Describe a vibe in plain text and let AI generate a matching color palette for your tokens. Powered by Claude (Anthropic). Requires a Pro license key.'}
+              </p>
+            </div>
           ) : (
-            <>
-              <input
-                type="text"
-                value={aiPrompt}
-                onChange={e => setAiPrompt(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') handleAiSubmit() }}
-                placeholder="Describe a style... e.g. &quot;fintech, deep blue, serious&quot;"
-                style={styles.aiInput}
-                disabled={aiLoading}
-              />
-              <button
-                onClick={handleAiSubmit}
-                disabled={aiLoading || !aiPrompt.trim()}
-                style={{
-                  ...styles.aiSubmit,
-                  ...(aiLoading || !aiPrompt.trim() ? { opacity: 0.4 } : {}),
-                }}
-              >
-                {aiLoading ? '...' : '->'}
-              </button>
-            </>
+            <div style={styles.aiKeySection}>
+              <div style={styles.aiKeyRow}>
+                <input
+                  type="text"
+                  value={aiPrompt}
+                  onChange={e => { setAiPrompt(e.target.value); setAiJustActivated(false) }}
+                  onKeyDown={e => { if (e.key === 'Enter') handleAiSubmit() }}
+                  placeholder="Describe a style... e.g. &quot;fintech, deep blue, serious&quot;"
+                  style={styles.aiInput}
+                  disabled={aiLoading}
+                />
+                <button
+                  onClick={handleAiSubmit}
+                  disabled={aiLoading || !aiPrompt.trim()}
+                  style={{
+                    ...styles.aiSubmit,
+                    ...(aiLoading || !aiPrompt.trim() ? { opacity: 0.4 } : {}),
+                  }}
+                >
+                  {aiLoading ? '...' : '->'}
+                </button>
+              </div>
+              {aiJustActivated && (
+                <p style={styles.aiKeyDesc}>
+                  Pro unlocked. Describe any mood, style, or reference — Claude handles the rest. Happy shipping.
+                </p>
+              )}
+            </div>
           )}
         </div>
       )}
@@ -617,6 +659,23 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '8px 14px',
     borderBottom: '1px solid #d4d4d8',
     flexShrink: 0,
+  },
+  aiKeySection: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 8,
+    width: '100%',
+  } as React.CSSProperties,
+  aiKeyRow: {
+    display: 'flex',
+    gap: 6,
+  },
+  aiKeyDesc: {
+    margin: 0,
+    fontSize: 11,
+    lineHeight: 1.4,
+    color: '#71717a',
+    fontFamily: 'inherit',
   },
   aiInput: {
     flex: 1,

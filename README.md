@@ -1,6 +1,4 @@
-<p align="center">
-  <img src="https://raw.githubusercontent.com/VianneyBertrand/csstuner/main/assets/logo.svg" alt="CssTuner" width="400" />
-</p>
+![CssTuner](https://raw.githubusercontent.com/VianneyBertrand/csstuner/main/assets/logo.svg)
 
 Devtool overlay to tune CSS design tokens live on your real pages.
 

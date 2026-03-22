@@ -13,6 +13,7 @@ export function CssTuner({
   position = 'bottom-left',
   persist = true,
   companionUrl,
+  aiEndpoint,
 }: CssTunerProps) {
   const [open, setOpen] = useState(false)
 
@@ -48,6 +49,7 @@ export function CssTuner({
           vars={vars}
           persist={persist}
           companionUrl={companionUrl}
+          aiEndpoint={aiEndpoint}
           onClose={() => setOpen(false)}
           width={PANEL_WIDTH}
         />

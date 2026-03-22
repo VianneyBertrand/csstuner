@@ -8,6 +8,7 @@ interface PanelProps {
   vars: CssTunerProps['vars']
   persist: boolean
   companionUrl?: string
+  aiEndpoint?: string
   onClose: () => void
   width?: number
 }
@@ -205,7 +206,9 @@ function walkRulesWithProps(
   }
 }
 
-export function Panel({ vars, persist, companionUrl, onClose, width = 300 }: PanelProps) {
+const AI_ENDPOINT_DEFAULT = 'https://csstuner.com/api/ai'
+
+export function Panel({ vars, persist, companionUrl, aiEndpoint, onClose, width = 300 }: PanelProps) {
   const {
     groups, framework, modifiedVars, setVar, resetVar, resetAll, originalVars,
     activeMode, hasDarkMode, switchMode, lightModified, darkModified,
@@ -216,6 +219,9 @@ export function Panel({ vars, persist, companionUrl, onClose, width = 300 }: Pan
 
   const [inspecting, setInspecting] = useState(false)
   const [inspectedVarNames, setInspectedVarNames] = useState<string[]>([])
+  const [aiOpen, setAiOpen] = useState(false)
+  const [aiPrompt, setAiPrompt] = useState('')
+  const [aiLoading, setAiLoading] = useState(false)
   const hasChanges = Object.keys(lightModified).length + Object.keys(darkModified).length > 0
 
   const allVars = groups.flatMap(g => g.vars)
@@ -289,6 +295,33 @@ export function Panel({ vars, persist, companionUrl, onClose, width = 300 }: Pan
   const inspectedVars: CssVariable[] = inspectedVarNames
     .map(name => allVars.find(v => v.name === name))
     .filter((v): v is CssVariable => v !== undefined)
+
+  const handleAiSubmit = useCallback(async () => {
+    if (!aiPrompt.trim() || aiLoading) return
+    setAiLoading(true)
+    try {
+      const endpoint = aiEndpoint ?? AI_ENDPOINT_DEFAULT
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: aiPrompt,
+          variables: allVarNames,
+        }),
+      })
+      if (!res.ok) throw new Error('AI request failed')
+      const { palette } = await res.json() as { palette: Record<string, string> }
+      for (const [name, value] of Object.entries(palette)) {
+        if (allVarNames.includes(name)) {
+          setVar(name, value)
+        }
+      }
+    } catch (err) {
+      console.error('CssTuner AI error:', err)
+    } finally {
+      setAiLoading(false)
+    }
+  }, [aiPrompt, aiLoading, aiEndpoint, allVarNames, setVar])
 
   // Custom overlay scrollbar
   const contentRef = useRef<HTMLDivElement>(null)
@@ -380,6 +413,22 @@ export function Panel({ vars, persist, companionUrl, onClose, width = 300 }: Pan
               <path d="m2 22 2-2"/>
             </svg>
           </button>
+          <button
+            onClick={() => setAiOpen(prev => !prev)}
+            style={{
+              ...styles.headerButton,
+              ...(aiOpen ? styles.inspectButtonActive : {}),
+            }}
+            aria-label="AI palette"
+            aria-pressed={aiOpen}
+            title="AI palette"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2a4 4 0 0 0-4 4v2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2h-2V6a4 4 0 0 0-4-4z"/>
+              <circle cx="9" cy="14" r="1"/>
+              <circle cx="15" cy="14" r="1"/>
+            </svg>
+          </button>
           <button onClick={onClose} style={styles.headerButton} aria-label="Close panel" title="Close panel">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="18" y1="6" x2="6" y2="18"/>
@@ -389,6 +438,30 @@ export function Panel({ vars, persist, companionUrl, onClose, width = 300 }: Pan
         </div>
       </div>
 
+      {/* AI input */}
+      {aiOpen && (
+        <div style={styles.aiBar}>
+          <input
+            type="text"
+            value={aiPrompt}
+            onChange={e => setAiPrompt(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') handleAiSubmit() }}
+            placeholder="Describe a style... e.g. &quot;fintech, deep blue, serious&quot;"
+            style={styles.aiInput}
+            disabled={aiLoading}
+          />
+          <button
+            onClick={handleAiSubmit}
+            disabled={aiLoading || !aiPrompt.trim()}
+            style={{
+              ...styles.aiSubmit,
+              ...(aiLoading || !aiPrompt.trim() ? { opacity: 0.4 } : {}),
+            }}
+          >
+            {aiLoading ? '...' : '->'}
+          </button>
+        </div>
+      )}
 
       {/* Contenu */}
       <div style={styles.contentWrap}>
@@ -485,6 +558,33 @@ const styles: Record<string, React.CSSProperties> = {
     marginRight: -6,
   },
 
+  aiBar: {
+    display: 'flex',
+    gap: 6,
+    padding: '8px 14px',
+    borderBottom: '1px solid #d4d4d8',
+    flexShrink: 0,
+  },
+  aiInput: {
+    flex: 1,
+    padding: '6px 10px',
+    fontSize: 11,
+    fontFamily: 'inherit',
+    background: '#fff',
+    border: '1px solid #d4d4d8',
+    color: '#18181b',
+    outline: 'none',
+  },
+  aiSubmit: {
+    padding: '6px 10px',
+    fontSize: 11,
+    fontWeight: 600,
+    fontFamily: 'inherit',
+    background: '#6366f1',
+    color: '#fff',
+    border: 'none',
+    cursor: 'pointer',
+  },
   asciiLogo: {
     margin: 0,
     padding: 0,

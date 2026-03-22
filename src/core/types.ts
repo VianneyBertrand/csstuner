@@ -8,6 +8,7 @@ export interface CssTunerProps {
   position?: 'bottom-left' | 'bottom-right'
   persist?: boolean
   companionUrl?: string
+  aiEndpoint?: string
 }
 
 export interface CssVariable {

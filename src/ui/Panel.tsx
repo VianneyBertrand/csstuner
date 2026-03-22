@@ -473,7 +473,7 @@ export function Panel({ vars, persist, companionUrl, aiEndpoint, onClose, width 
                 style={styles.aiInput}
               />
               <a
-                href="https://buy.stripe.com/test_9B6fZb4hZb0d8ohg0na3u00"
+                href="https://buy.stripe.com/test_dRm00jaOaeCt19YefS3wQ00"
                 target="_blank"
                 rel="noopener noreferrer"
                 style={styles.aiGetPro}

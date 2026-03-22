@@ -287,7 +287,7 @@ export function ColorPicker({ value, onChange }: ColorPickerProps) {
               <div style={styles.sliderWrap}>
                 <div style={{
                   ...styles.sliderTrack,
-                  background: `linear-gradient(to right, #c4c4cc ${pct}%, #e4e4e7 ${pct}%)`,
+                  background: `linear-gradient(to right, #6366f1 ${pct}%, #e4e4e7 ${pct}%)`,
                 }} />
                 <input
                   type="range"
@@ -328,7 +328,7 @@ const styles: Record<string, React.CSSProperties> = {
   areaCanvas: {
     width: '100%',
     height: AREA_H,
-    borderRadius: 0,
+    borderRadius: 6,
     display: 'block',
     border: '1px solid rgba(0,0,0,0.08)',
   },
@@ -379,7 +379,7 @@ const styles: Record<string, React.CSSProperties> = {
     color: '#d97706',
     background: 'rgba(217,119,6,0.08)',
     padding: '1px 5px',
-    borderRadius: 3,
+    borderRadius: 6,
     letterSpacing: '0.5px',
     flexShrink: 0,
   },
@@ -414,7 +414,7 @@ const styles: Record<string, React.CSSProperties> = {
     left: 0,
     right: 0,
     height: 6,
-    borderRadius: 0,
+    borderRadius: 6,
     pointerEvents: 'none',
   } as React.CSSProperties,
   slider: {

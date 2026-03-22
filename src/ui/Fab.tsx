@@ -25,6 +25,7 @@ export function Fab({ position, onClick }: FabProps) {
     letterSpacing: 0,
     fontFamily: 'system-ui, -apple-system, sans-serif',
     WebkitFontSmoothing: 'antialiased',
+    pointerEvents: 'auto',
   }
 
   return (

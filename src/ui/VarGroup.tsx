@@ -132,18 +132,12 @@ const styles: Record<string, React.CSSProperties> = {
   varItem: {
     display: 'flex',
     flexDirection: 'column',
-    borderRadius: 8,
     padding: '8px 16px',
   },
   varItemActive: {
     background: '#fff',
     gap: 8,
-    borderRadius: 0,
-    borderTop: '1px solid #d4d4d8',
-    borderBottom: '1px solid #d4d4d8',
-    borderLeft: '1px solid #d4d4d8',
-    borderRight: 'none',
-    marginRight: -1,
+    boxShadow: 'inset 1px 0 0 #d4d4d8, 0 1px 0 #d4d4d8, 0 -1px 0 #d4d4d8',
   },
   varRow: {
     display: 'flex',

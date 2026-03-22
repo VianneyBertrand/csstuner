@@ -112,7 +112,10 @@ export function ShadowContainer({ children, open, panelWidth = 300 }: ShadowRoot
         zIndex: 99999,
         top: 0,
         left: 0,
-        ...(open ? { width: panelWidth, height: '100vh' } : {}),
+        ...(open
+          ? { width: panelWidth, height: '100vh' }
+          : { width: '100vw', height: '100vh', pointerEvents: 'none' }
+        ),
       }} />
       {shadowRoot && createPortal(children, shadowRoot)}
     </>

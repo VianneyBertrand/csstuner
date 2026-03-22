@@ -1,0 +1,784 @@
+---
+const title = "CssTuner — Tune your design tokens on your real pages"
+const description = "The devtool overlay that lives in your app. Tweak colors, toggle dark mode, save to file. Works with shadcn, Tailwind v4, Radix, and any CSS-variable-based project."
+const url = "https://csstuner.com"
+---
+
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{title}</title>
+  <meta name="description" content={description} />
+
+  <!-- OG -->
+  <meta property="og:title" content={title} />
+  <meta property="og:description" content={description} />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content={url} />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content={title} />
+  <meta name="twitter:description" content={description} />
+
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ========= RESET & BASE ========= */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #09090b;
+      --bg-raised: #111113;
+      --border: #27272a;
+      --border-bright: #3f3f46;
+      --text: #fafafa;
+      --text-muted: #a1a1aa;
+      --text-dim: #71717a;
+      --accent: #6366f1;
+      --accent-dim: rgba(99, 102, 241, 0.15);
+      --red: #ef4444;
+      --yellow: #eab308;
+      --green: #22c55e;
+      --font: 'Geist Mono', 'SF Mono', ui-monospace, monospace;
+    }
+
+    html {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      line-height: 1.6;
+      font-size: 14px;
+    }
+
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ========= GRAIN OVERLAY ========= */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0.03;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    }
+
+    /* ========= LAYOUT ========= */
+    .container {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    section {
+      padding: 80px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    section:last-of-type {
+      border-bottom: none;
+    }
+
+    /* ========= SECTION LABEL ========= */
+    .section-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 24px;
+    }
+
+    .section-label span {
+      color: var(--accent);
+      margin-right: 8px;
+    }
+
+    /* ========= NAV ========= */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      padding: 16px 24px;
+      background: rgba(9, 9, 11, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .nav-logo {
+      font-size: 5px;
+      line-height: 1.15;
+      white-space: pre;
+      user-select: none;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 24px;
+      align-items: center;
+    }
+
+    .nav-links a {
+      font-size: 12px;
+      color: var(--text-muted);
+      transition: color 150ms;
+    }
+
+    .nav-links a:hover {
+      color: var(--text);
+      text-decoration: none;
+    }
+
+    .nav-cta {
+      font-size: 11px;
+      padding: 6px 14px;
+      background: var(--accent);
+      color: #fff !important;
+      border: none;
+      cursor: pointer;
+    }
+
+    /* ========= HERO ========= */
+    .hero {
+      padding-top: 140px;
+      padding-bottom: 80px;
+      text-align: center;
+    }
+
+    .hero-ascii {
+      font-size: 8px;
+      line-height: 1.15;
+      margin-bottom: 40px;
+      white-space: pre;
+      user-select: none;
+    }
+
+    .hero-ascii .css-part { color: var(--text); }
+    .hero-ascii .tuner-part { color: var(--accent); }
+
+    .hero h1 {
+      font-size: clamp(24px, 4vw, 36px);
+      font-weight: 700;
+      line-height: 1.2;
+      letter-spacing: -1px;
+      margin-bottom: 16px;
+    }
+
+    .hero h1 em {
+      font-style: normal;
+      color: var(--accent);
+    }
+
+    .hero .subtitle {
+      font-size: 14px;
+      color: var(--text-muted);
+      max-width: 500px;
+      margin: 0 auto 40px;
+      line-height: 1.7;
+    }
+
+    .install-cmd {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--bg-raised);
+      border: 1px solid var(--border);
+      padding: 12px 20px;
+      font-family: var(--font);
+      font-size: 14px;
+      color: var(--text);
+      cursor: pointer;
+      transition: border-color 200ms;
+      user-select: all;
+    }
+
+    .install-cmd:hover {
+      border-color: var(--accent);
+    }
+
+    .install-cmd .prompt {
+      color: var(--accent);
+      user-select: none;
+    }
+
+    .install-cmd .copy-hint {
+      font-size: 10px;
+      color: var(--text-dim);
+      user-select: none;
+    }
+
+    /* ========= MOCKUP ========= */
+    .mockup {
+      margin: 56px auto 0;
+      max-width: 700px;
+      border: 1px solid var(--border);
+      background: var(--bg-raised);
+      overflow: hidden;
+    }
+
+    .mockup-titlebar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .mockup-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .mockup-dot--red { background: var(--red); }
+    .mockup-dot--yellow { background: var(--yellow); }
+    .mockup-dot--green { background: var(--green); }
+
+    .mockup-titlebar span {
+      flex: 1;
+      text-align: center;
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-right: 42px;
+    }
+
+    .mockup-body {
+      display: flex;
+      min-height: 340px;
+    }
+
+    .mockup-panel {
+      width: 200px;
+      background: rgba(255, 255, 255, 0.03);
+      border-right: 1px solid var(--border);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .mockup-panel-header {
+      font-size: 5px;
+      line-height: 1.15;
+      white-space: pre;
+      margin-bottom: 4px;
+    }
+
+    .mockup-swatch-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .mockup-swatch {
+      width: 18px;
+      height: 18px;
+      border: 1px solid var(--border);
+    }
+
+    .mockup-swatch-label {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    .mockup-page {
+      flex: 1;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .mockup-page-block {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      flex: 1;
+    }
+
+    .mockup-page-bar {
+      height: 12px;
+      width: 60%;
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .mockup-page-bar--short { width: 35%; }
+
+    .placeholder-text {
+      font-size: 10px;
+      color: var(--text-dim);
+      text-align: center;
+      padding: 40px;
+      opacity: 0.5;
+    }
+
+    /* ========= PROBLEM ========= */
+    .pain-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      margin-top: 32px;
+    }
+
+    .pain-card {
+      background: var(--bg);
+      padding: 24px;
+    }
+
+    .pain-card .num {
+      font-size: 10px;
+      color: var(--accent);
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .pain-card h3 {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+
+    .pain-card p {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    /* ========= SOLUTION ========= */
+    .solution-text {
+      font-size: 16px;
+      line-height: 1.7;
+      color: var(--text-muted);
+      max-width: 600px;
+    }
+
+    .solution-text strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .diff-block {
+      margin-top: 32px;
+      border: 1px solid var(--border);
+      background: var(--bg-raised);
+      padding: 20px 24px;
+      font-size: 13px;
+      line-height: 1.8;
+    }
+
+    .diff-block .removed {
+      color: var(--red);
+      opacity: 0.6;
+      text-decoration: line-through;
+    }
+
+    .diff-block .added {
+      color: var(--green);
+    }
+
+    .diff-block .comment {
+      color: var(--text-dim);
+    }
+
+    /* ========= FEATURES ========= */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+    }
+
+    .feature-card {
+      background: var(--bg);
+      padding: 28px 24px;
+    }
+
+    .feature-card .icon {
+      font-size: 18px;
+      margin-bottom: 12px;
+      display: block;
+      color: var(--accent);
+      font-weight: 300;
+    }
+
+    .feature-card h3 {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .feature-card p {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    /* ========= STEPS ========= */
+    .steps {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      border: 1px solid var(--border);
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: 60px 1fr;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .step:last-child {
+      border-bottom: none;
+    }
+
+    .step-num {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--accent);
+      border-right: 1px solid var(--border);
+    }
+
+    .step-content {
+      padding: 24px;
+    }
+
+    .step-content h3 {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .step-content p {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    .step-content code {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 4px 10px;
+      background: var(--bg-raised);
+      border: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--green);
+    }
+
+    /* ========= FRAMEWORKS ========= */
+    .framework-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .framework-tag {
+      padding: 8px 16px;
+      border: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--text-muted);
+      transition: border-color 200ms, color 200ms;
+    }
+
+    .framework-tag:hover {
+      border-color: var(--border-bright);
+      color: var(--text);
+    }
+
+    /* ========= FINAL CTA ========= */
+    .final-cta {
+      text-align: center;
+      padding: 100px 0;
+    }
+
+    .final-cta h2 {
+      font-size: clamp(20px, 3vw, 28px);
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .final-cta p {
+      color: var(--text-muted);
+      margin-bottom: 32px;
+      font-size: 14px;
+    }
+
+    /* ========= FOOTER ========= */
+    footer {
+      padding: 32px 0;
+      border-top: 1px solid var(--border);
+      text-align: center;
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    footer a {
+      color: var(--text-muted);
+    }
+
+    /* ========= RESPONSIVE ========= */
+    @media (max-width: 640px) {
+      section { padding: 56px 0; }
+
+      .hero { padding-top: 120px; }
+
+      .hero-ascii { font-size: 5px; }
+
+      .pain-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .feature-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .mockup-body { flex-direction: column; }
+
+      .mockup-panel {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .nav-links a:not(.nav-cta) {
+        display: none;
+      }
+
+      .step {
+        grid-template-columns: 44px 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- NAV -->
+  <nav>
+    <pre class="nav-logo"><span class="css-part">█▀▀ █▀▀ █▀▀</span><span class="tuner-part"> ▀█▀ █ █ █▀█ █▀▀ █▀▄</span>
+<span class="css-part">█   ▀▀█ ▀▀█</span><span class="tuner-part">  █  █ █ █ █ █▀▀ █▀▄</span>
+<span class="css-part">▀▀▀ ▀▀▀ ▀▀▀</span><span class="tuner-part">  ▀  ▀▀▀ ▀ ▀ ▀▀▀ ▀ ▀</span></pre>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#how-it-works">Setup</a>
+      <a href="https://github.com/csstuner/csstuner">GitHub</a>
+      <a href="https://www.npmjs.com/package/csstuner" class="nav-cta">npm</a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <!-- HERO -->
+    <section class="hero">
+      <pre class="hero-ascii"><span class="css-part">█▀▀ █▀▀ █▀▀</span><span class="tuner-part"> ▀█▀ █ █ █▀█ █▀▀ █▀▄</span>
+<span class="css-part">█   ▀▀█ ▀▀█</span><span class="tuner-part">  █  █ █ █ █ █▀▀ █▀▄</span>
+<span class="css-part">▀▀▀ ▀▀▀ ▀▀▀</span><span class="tuner-part">  ▀  ▀▀▀ ▀ ▀ ▀▀▀ ▀ ▀</span></pre>
+
+      <h1>Tune your design tokens.<br/><em>On your real pages.</em></h1>
+      <p class="subtitle">
+        The devtool overlay that lives in your app. Tweak colors, toggle dark mode, save to file. No context switching.
+      </p>
+
+      <div class="install-cmd" onclick="navigator.clipboard.writeText('npm install csstuner')">
+        <span class="prompt">$</span>
+        npm install csstuner
+        <span class="copy-hint">click to copy</span>
+      </div>
+
+      <!-- MOCKUP -->
+      <div class="mockup">
+        <div class="mockup-titlebar">
+          <div class="mockup-dot mockup-dot--red"></div>
+          <div class="mockup-dot mockup-dot--yellow"></div>
+          <div class="mockup-dot mockup-dot--green"></div>
+          <span>localhost:3000</span>
+        </div>
+        <div class="mockup-body">
+          <div class="mockup-panel">
+            <pre class="mockup-panel-header"><span class="css-part">█▀▀ █▀▀ █▀▀</span><span class="tuner-part"> ▀█▀ █ █ █▀█ █▀▀ █▀▄</span>
+<span class="css-part">█   ▀▀█ ▀▀█</span><span class="tuner-part">  █  █ █ █ █ █▀▀ █▀▄</span>
+<span class="css-part">▀▀▀ ▀▀▀ ▀▀▀</span><span class="tuner-part">  ▀  ▀▀▀ ▀ ▀ ▀▀▀ ▀ ▀</span></pre>
+            <div class="mockup-swatch-row">
+              <div class="mockup-swatch" style="background:#fafafa;"></div>
+              <span class="mockup-swatch-label">Background</span>
+            </div>
+            <div class="mockup-swatch-row">
+              <div class="mockup-swatch" style="background:#18181b;"></div>
+              <span class="mockup-swatch-label">Foreground</span>
+            </div>
+            <div class="mockup-swatch-row">
+              <div class="mockup-swatch" style="background:#6366f1;"></div>
+              <span class="mockup-swatch-label">Primary</span>
+            </div>
+            <div class="mockup-swatch-row">
+              <div class="mockup-swatch" style="background:#ef4444;"></div>
+              <span class="mockup-swatch-label">Destructive</span>
+            </div>
+          </div>
+          <div class="mockup-page">
+            <div class="placeholder-text">
+              GIF demo coming soon
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PROBLEM -->
+    <section id="problem">
+      <div class="section-label"><span>//</span> THE PROBLEM</div>
+      <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 8px;">Every theme editor pulls you out of your app.</h2>
+      <p style="color: var(--text-muted); font-size: 13px;">You tweak on a generic demo. You paste into your code. You refresh. You tweak again. Repeat.</p>
+
+      <div class="pain-grid">
+        <div class="pain-card">
+          <div class="num">01</div>
+          <h3>Context switching</h3>
+          <p>External editors show their own UI, not yours. You never see how colors work on your actual components.</p>
+        </div>
+        <div class="pain-card">
+          <div class="num">02</div>
+          <h3>Copy-paste workflow</h3>
+          <p>Generate a palette, copy the CSS, paste it, refresh, realize it's wrong, go back. Every. Single. Time.</p>
+        </div>
+        <div class="pain-card">
+          <div class="num">03</div>
+          <h3>No dark mode awareness</h3>
+          <p>Most editors generate one set of colors. You're on your own for dark mode. Two trips instead of one.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SOLUTION -->
+    <section id="solution">
+      <div class="section-label"><span>//</span> THE SOLUTION</div>
+      <p class="solution-text">
+        <strong>CssTuner lives inside your app.</strong> It reads your existing CSS variables, shows them on a panel next to your real pages, and writes changes back to your CSS file. You see every change instantly on your actual components. No external tool. No copy-paste.
+      </p>
+
+      <div class="diff-block">
+        <div class="comment">// your workflow before</div>
+        <div class="removed">open external editor → tweak on demo → copy css → paste → refresh → repeat</div>
+        <br />
+        <div class="comment">// your workflow with csstuner</div>
+        <div class="added">tweak on your page → save</div>
+      </div>
+    </section>
+
+    <!-- FEATURES -->
+    <section id="features">
+      <div class="section-label"><span>//</span> FEATURES</div>
+
+      <div class="feature-grid">
+        <div class="feature-card">
+          <span class="icon">L C H</span>
+          <h3>OKLCH Color Picker</h3>
+          <p>2D lightness-chroma area + hue strip. Paste any format (hex, hsl, rgb, oklch) — it converts automatically. Gamut awareness with P3 indicator.</p>
+        </div>
+        <div class="feature-card">
+          <span class="icon">◑</span>
+          <h3>Dark Mode Toggle</h3>
+          <p>Detects your .dark variables automatically. Toggle between light and dark, edit each set independently. Syncs with your app's own toggle.</p>
+        </div>
+        <div class="feature-card">
+          <span class="icon">&gt;_</span>
+          <h3>Inspect Mode</h3>
+          <p>Click any element on your page. CssTuner shows the CSS variables that affect it — including inherited ones. Edit directly.</p>
+        </div>
+        <div class="feature-card">
+          <span class="icon">:w</span>
+          <h3>Save to File</h3>
+          <p>Click Save, changes are written to your CSS file. The companion detects the right file, preserves your format (oklch, hsl, hex). Hot-reload picks it up.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section id="how-it-works">
+      <div class="section-label"><span>//</span> HOW IT WORKS</div>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h3>Install</h3>
+            <p>One line. Works with any React project.</p>
+            <code>npm install csstuner</code>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h3>Add to your layout</h3>
+            <p>Drop the component. It auto-detects your framework and groups your variables.</p>
+            <code>&lt;CssTuner /&gt;</code>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <h3>Tweak and save</h3>
+            <p>Open the overlay, change colors on your real pages, click Save. Done. Your CSS file is updated.</p>
+            <code>npx csstuner</code>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FRAMEWORKS -->
+    <section id="frameworks">
+      <div class="section-label"><span>//</span> COMPATIBILITY</div>
+      <h2 style="font-size: 16px; font-weight: 600; margin-bottom: 8px;">Works with any CSS-variable-based project.</h2>
+      <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 8px;">Auto-detects your design system and groups variables accordingly.</p>
+
+      <div class="framework-list">
+        <div class="framework-tag">shadcn/ui</div>
+        <div class="framework-tag">Tailwind v4</div>
+        <div class="framework-tag">Radix Themes</div>
+        <div class="framework-tag">Open Props</div>
+        <div class="framework-tag">Any --custom-property</div>
+      </div>
+    </section>
+
+    <!-- FINAL CTA -->
+    <section class="final-cta">
+      <h2>Start tuning.</h2>
+      <p>Free and open source. One line to install.</p>
+
+      <div class="install-cmd" onclick="navigator.clipboard.writeText('npm install csstuner')" style="margin: 0 auto;">
+        <span class="prompt">$</span>
+        npm install csstuner
+        <span class="copy-hint">click to copy</span>
+      </div>
+    </section>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="container">
+      CssTuner — <a href="https://github.com/csstuner/csstuner">GitHub</a> · <a href="https://www.npmjs.com/package/csstuner">npm</a>
+    </div>
+  </footer>
+</body>
+</html>

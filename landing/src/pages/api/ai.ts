@@ -70,8 +70,9 @@ export const POST: APIRoute = async ({ request }) => {
   }
 
   try {
-    const { prompt, variables } = await request.json() as {
+    const { prompt, variables, licenseKey } = await request.json() as {
       prompt: string;
+      licenseKey?: string;
       variables: string[];
     };
 
@@ -79,6 +80,16 @@ export const POST: APIRoute = async ({ request }) => {
       return new Response(
         JSON.stringify({ error: 'Missing prompt or variables' }),
         { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders() } }
+      );
+    }
+
+    // Validate license key
+    const { validateKey } = await import('./_license');
+    const isValid = await validateKey(licenseKey ?? '');
+    if (!isValid) {
+      return new Response(
+        JSON.stringify({ error: 'invalid_license', message: 'Valid CssTuner Pro license required.' }),
+        { status: 403, headers: { 'Content-Type': 'application/json', ...corsHeaders() } }
       );
     }
 

@@ -1,0 +1,102 @@
+---
+export const prerender = false;
+
+import Stripe from 'stripe';
+
+const sessionId = Astro.url.searchParams.get('session_id');
+let licenseKey = '';
+let email = '';
+let error = '';
+
+if (sessionId) {
+  try {
+    const stripe = new Stripe(import.meta.env.STRIPE_SECRET_KEY);
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    licenseKey = session.metadata?.license_key || '';
+    email = session.customer_details?.email || '';
+
+    if (!licenseKey) {
+      // Webhook might not have fired yet — generate key now as fallback
+      const { generateKey, storeKey } = await import('./api/_license');
+      const key = generateKey();
+      if (email) await storeKey(key, email);
+      await stripe.checkout.sessions.update(sessionId, { metadata: { license_key: key } });
+      licenseKey = key;
+    }
+  } catch (err) {
+    error = 'Could not retrieve your license. Please contact support.';
+  }
+} else {
+  error = 'No session found.';
+}
+---
+
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CssTuner Pro — License Key</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Geist Mono', ui-monospace, monospace;
+      background: #09090b;
+      color: #fafafa;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .card {
+      max-width: 480px;
+      width: 100%;
+      border: 1px solid #27272a;
+      padding: 40px 32px;
+    }
+    h1 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+    p { font-size: 13px; color: #a1a1aa; line-height: 1.6; margin-bottom: 20px; }
+    .key-box {
+      background: #111113;
+      border: 1px solid #27272a;
+      padding: 14px 18px;
+      font-size: 14px;
+      color: #6366f1;
+      word-break: break-all;
+      cursor: pointer;
+      margin-bottom: 12px;
+    }
+    .key-box:hover { border-color: #6366f1; }
+    .hint { font-size: 11px; color: #71717a; margin-bottom: 24px; }
+    .steps { font-size: 12px; color: #a1a1aa; line-height: 1.8; }
+    .steps strong { color: #fafafa; }
+    .error { color: #ef4444; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    {error ? (
+      <p class="error">{error}</p>
+    ) : (
+      <>
+        <h1>You're in.</h1>
+        <p>Your CssTuner Pro license key:</p>
+        <div class="key-box" onclick="navigator.clipboard.writeText(this.textContent.trim())" title="Click to copy">
+          {licenseKey}
+        </div>
+        <p class="hint">Click to copy. Also sent to {email}.</p>
+        <div class="steps">
+          <strong>Next steps:</strong><br/>
+          1. Open CssTuner panel on your project<br/>
+          2. Click the AI icon in the header<br/>
+          3. Click "Enter license key"<br/>
+          4. Paste your key — done
+        </div>
+      </>
+    )}
+  </div>
+</body>
+</html>

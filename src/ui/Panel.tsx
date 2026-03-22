@@ -222,6 +222,11 @@ export function Panel({ vars, persist, companionUrl, aiEndpoint, onClose, width 
   const [aiOpen, setAiOpen] = useState(false)
   const [aiPrompt, setAiPrompt] = useState('')
   const [aiLoading, setAiLoading] = useState(false)
+  const [aiNeedsKey, setAiNeedsKey] = useState(false)
+  const [licenseKey, setLicenseKey] = useState(() => {
+    if (typeof window !== 'undefined') return localStorage.getItem('csstuner:pro') ?? ''
+    return ''
+  })
   const hasChanges = Object.keys(lightModified).length + Object.keys(darkModified).length > 0
 
   const allVars = groups.flatMap(g => g.vars)
@@ -313,8 +318,14 @@ export function Panel({ vars, persist, companionUrl, aiEndpoint, onClose, width 
         body: JSON.stringify({
           prompt: aiPrompt,
           variables: targetVars,
+          licenseKey,
         }),
       })
+      if (res.status === 403) {
+        setAiNeedsKey(true)
+        setAiLoading(false)
+        return
+      }
       if (!res.ok) throw new Error('AI request failed')
       const { palette } = await res.json() as { palette: Record<string, string> }
       for (const [name, value] of Object.entries(palette)) {
@@ -322,12 +333,13 @@ export function Panel({ vars, persist, companionUrl, aiEndpoint, onClose, width 
           setVar(name, value)
         }
       }
+      setAiNeedsKey(false)
     } catch (err) {
       console.error('CssTuner AI error:', err)
     } finally {
       setAiLoading(false)
     }
-  }, [aiPrompt, aiLoading, aiEndpoint, allVarNames, inspecting, inspectedVarNames, setVar])
+  }, [aiPrompt, aiLoading, aiEndpoint, allVarNames, inspecting, inspectedVarNames, setVar, licenseKey])
 
   // Custom overlay scrollbar
   const contentRef = useRef<HTMLDivElement>(null)
@@ -447,25 +459,51 @@ export function Panel({ vars, persist, companionUrl, aiEndpoint, onClose, width 
       {/* AI input */}
       {aiOpen && (
         <div style={styles.aiBar}>
-          <input
-            type="text"
-            value={aiPrompt}
-            onChange={e => setAiPrompt(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter') handleAiSubmit() }}
-            placeholder="Describe a style... e.g. &quot;fintech, deep blue, serious&quot;"
-            style={styles.aiInput}
-            disabled={aiLoading}
-          />
-          <button
-            onClick={handleAiSubmit}
-            disabled={aiLoading || !aiPrompt.trim()}
-            style={{
-              ...styles.aiSubmit,
-              ...(aiLoading || !aiPrompt.trim() ? { opacity: 0.4 } : {}),
-            }}
-          >
-            {aiLoading ? '...' : '->'}
-          </button>
+          {aiNeedsKey ? (
+            <>
+              <input
+                type="text"
+                value={licenseKey}
+                onChange={e => {
+                  setLicenseKey(e.target.value)
+                  localStorage.setItem('csstuner:pro', e.target.value)
+                }}
+                onKeyDown={e => { if (e.key === 'Enter') { setAiNeedsKey(false); handleAiSubmit() }}}
+                placeholder="Enter license key (cst_...)"
+                style={styles.aiInput}
+              />
+              <a
+                href="https://buy.stripe.com/test_9B6fZb4hZb0d8ohg0na3u00"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={styles.aiGetPro}
+              >
+                Get Pro
+              </a>
+            </>
+          ) : (
+            <>
+              <input
+                type="text"
+                value={aiPrompt}
+                onChange={e => setAiPrompt(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') handleAiSubmit() }}
+                placeholder="Describe a style... e.g. &quot;fintech, deep blue, serious&quot;"
+                style={styles.aiInput}
+                disabled={aiLoading}
+              />
+              <button
+                onClick={handleAiSubmit}
+                disabled={aiLoading || !aiPrompt.trim()}
+                style={{
+                  ...styles.aiSubmit,
+                  ...(aiLoading || !aiPrompt.trim() ? { opacity: 0.4 } : {}),
+                }}
+              >
+                {aiLoading ? '...' : '->'}
+              </button>
+            </>
+          )}
         </div>
       )}
 
@@ -591,6 +629,19 @@ const styles: Record<string, React.CSSProperties> = {
     border: 'none',
     cursor: 'pointer',
   },
+  aiGetPro: {
+    padding: '6px 12px',
+    fontSize: 11,
+    fontWeight: 600,
+    fontFamily: 'inherit',
+    background: 'linear-gradient(135deg, #6366f1 0%, #7c5ce7 100%)',
+    color: '#fff',
+    border: 'none',
+    cursor: 'pointer',
+    textDecoration: 'none',
+    whiteSpace: 'nowrap',
+    flexShrink: 0,
+  } as React.CSSProperties,
   asciiLogo: {
     margin: 0,
     padding: 0,

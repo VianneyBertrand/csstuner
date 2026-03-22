@@ -468,18 +468,27 @@ export function Panel({ vars, persist, companionUrl, aiEndpoint, onClose, width 
                   setLicenseKey(e.target.value)
                   localStorage.setItem('csstuner:pro', e.target.value)
                 }}
-                onKeyDown={e => { if (e.key === 'Enter') { setAiNeedsKey(false); handleAiSubmit() }}}
+                onKeyDown={e => { if (e.key === 'Enter' && licenseKey.startsWith('cst_')) { setAiNeedsKey(false); handleAiSubmit() }}}
                 placeholder="Enter license key (cst_...)"
                 style={styles.aiInput}
               />
-              <a
-                href="https://buy.stripe.com/test_dRm00jaOaeCt19YefS3wQ00"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={styles.aiGetPro}
-              >
-                Get Pro
-              </a>
+              {licenseKey.startsWith('cst_') ? (
+                <button
+                  onClick={() => { setAiNeedsKey(false); handleAiSubmit() }}
+                  style={styles.aiSubmit}
+                >
+                  Activate
+                </button>
+              ) : (
+                <a
+                  href="https://buy.stripe.com/test_dRm00jaOaeCt19YefS3wQ00"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={styles.aiGetPro}
+                >
+                  Get Pro
+                </a>
+              )}
             </>
           ) : (
             <>
